@@ -1,0 +1,25 @@
+{
+  "name": "objectuijs",
+  "version": "1.0.0",
+  "description": "オブジェクト志向でのUI作成のライブラリ",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "format": "prettier --write ./src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yutaishikawa526/ObjectUIjs.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yutaishikawa526/ObjectUIjs/issues"
+  },
+  "homepage": "https://github.com/yutaishikawa526/ObjectUIjs#readme",
+  "devDependencies": {
+    "prettier": "^3.2.5",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.4.5"
+  }
+}
