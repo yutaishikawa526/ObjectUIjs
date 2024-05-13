@@ -6,6 +6,7 @@ import * as Element from './element';
 // 別名
 type gMouseEvent = globalThis.MouseEvent;
 type gHtmlElement = globalThis.HTMLElement;
+type gCSSStyleDeclaration = globalThis.CSSStyleDeclaration;
 
 // マウスイベントリスナー
 export interface MouseEventListener {
@@ -102,6 +103,9 @@ class ClickEventHander extends Element.ElementEventHander<gMouseEvent, HTMLEleme
 export class HTMLElement extends Element.Element {
     // Nodeのオブジェクト
     protected readonly htmlElement: gHtmlElement;
+    // styleのオブジェクト
+    // 直接CSSを指定することで適用可能
+    public readonly style: gCSSStyleDeclaration;
 
     // mouseイベントの最初のハンドラー
     private mouseEventHandler: null | MouseEventHander = null;
@@ -112,6 +116,7 @@ export class HTMLElement extends Element.Element {
     public constructor(htmlElement: gHtmlElement) {
         super(htmlElement);
         this.htmlElement = htmlElement;
+        this.style = htmlElement.style;
     }
 
     /*----------------- 一般に外から使用される --------------*/
@@ -124,6 +129,21 @@ export class HTMLElement extends Element.Element {
         } else {
             parent.deleteChild(this);
         }
+    }
+
+    // クリックする
+    public click(): void {
+        this.htmlElement.click();
+    }
+
+    // フォーカスを設定する
+    public focus(): void {
+        this.htmlElement.focus();
+    }
+
+    // フォーカスを取り除く
+    public blur(): void {
+        this.htmlElement.blur();
     }
 
     // mouseイベントリスナーを設定する

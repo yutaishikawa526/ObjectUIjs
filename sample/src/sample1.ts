@@ -17,6 +17,7 @@ import * as ObjUiJs from 'objectuijs';
     newText.addChild(text);
 
     newText.addToNode(wrapper);
+    newText.style.color = 'red';
 
     const listener = new (class implements ObjUiJs.element.ClickEventListener {
         // クリックイベント

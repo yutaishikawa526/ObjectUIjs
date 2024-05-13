@@ -32,12 +32,21 @@ export abstract class TaskObject {
     public taskListener: TaskListener | null = null;
     // 実行ステータス
     public taskStatus: TaskStatus;
+    // 次のタスクID
+    private static nextTaskId: number = 1;
+    // タスクID。一意に設定される
+    public readonly taskId: string;
+    // カスタムタスクID。未指定の場合はタスクIDが振られる
+    private customTaskId: string;
 
     // タスクを実行する
     public abstract run(): void;
 
     // コンストラクタ
     public constructor(taskListener: TaskListener | null = null) {
+        this.taskId = String(TaskObject.nextTaskId);
+        TaskObject.nextTaskId++;
+        this.customTaskId = this.taskId;
         this.taskListener = taskListener;
         this.taskStatus = TaskStatus.removed;
     }
@@ -46,6 +55,15 @@ export abstract class TaskObject {
     public dispatch(): void {
         const tskManager = TaskManager.getInstance();
         tskManager.dispatch(this);
+    }
+
+    // カスタムタスクIDを設定する
+    public setCustomTaskId(customTaskId: string) {
+        this.customTaskId = customTaskId;
+    }
+    // カスタムタスクIDを取得する
+    public getCustomTaskId(): string {
+        return this.customTaskId;
     }
 }
 

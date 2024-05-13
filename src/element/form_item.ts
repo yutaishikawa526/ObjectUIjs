@@ -10,7 +10,7 @@ type gSelect = globalThis.HTMLSelectElement;
 type gButton = globalThis.HTMLButtonElement;
 type gEvent = globalThis.Event;
 
-type unionFormItem = gInput | gTextarea | gSelect | gButton;
+type UnionFormItem = gInput | gTextarea | gSelect | gButton;
 
 // 入力変更イベントリスナー
 export interface FormItemEventListener {
@@ -24,7 +24,7 @@ export interface FormItemEventListener {
 export type FormItemEvent = Element.ElementEvent<gEvent>;
 
 // 入力変更イベントハンドラー
-class FormItemEventHander extends Element.ElementEventHander<gEvent, FormItemElement, unionFormItem> {
+class FormItemEventHander extends Element.ElementEventHander<gEvent, FormItemElement, UnionFormItem> {
     // コンストラクタ
     public constructor(fiListener: FormItemEventListener, element: FormItemElement) {
         const listenter = [
@@ -65,7 +65,7 @@ export class FormItemProp {
 }
 
 // フォームアイテムの基底クラス
-export class FormItemElement extends Html.HTMLElementVariable<unionFormItem> {
+export class FormItemElement extends Html.HTMLElementVariable<UnionFormItem> {
     // 入力変更のイベントハンドラー
     private formItemEventHandler: FormItemEventHander | null = null;
 
@@ -114,9 +114,9 @@ export class FormItemElement extends Html.HTMLElementVariable<unionFormItem> {
     }
 }
 
-// FormItemElementで対象のunionFormItemをジェネリクスで指定して継承しやすくする
-export class FormItemElementVariable<T extends unionFormItem> extends FormItemElement {
-    // unionFormItemのオブジェクト
+// FormItemElementで対象のUnionFormItemをジェネリクスで指定して継承しやすくする
+export class FormItemElementVariable<T extends UnionFormItem> extends FormItemElement {
+    // UnionFormItemのオブジェクト
     protected readonly formItemVariable: T;
 
     // コンストラクタ
