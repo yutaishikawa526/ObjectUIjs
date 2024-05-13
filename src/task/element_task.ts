@@ -52,7 +52,7 @@ class ElementTaskManager implements TaskListener {
         const elementIdList: Array<string> = this.willRenderElemList.map((elem) => {
             return elem.getElementId();
         });
-        return elementIdList.includes(element.getElementId());
+        return elementIdList.indexOf(element.getElementId()) !== -1;
     }
 
     /**

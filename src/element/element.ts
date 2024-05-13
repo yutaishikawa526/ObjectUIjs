@@ -244,7 +244,7 @@ export class Element {
         const elemIdList: Array<string> = this.childElements.map((elem) => {
             return elem.getElementId();
         });
-        return elemIdList.includes(child.getElementId());
+        return elemIdList.indexOf(child.getElementId()) !== -1;
     }
 
     // 子孫含め子要素か判定する
