@@ -38,12 +38,14 @@ function create(){
     touch 'index.ts'
 
     find . -mindepth 1 -maxdepth 1 -type f \
+        | sort \
         | grep -E '^\./[^./]+\.(js|ts|tsx|mjs)$' \
         | grep -v -E '^\./index.ts$' \
         | sed -E 's#^(\./[^./]+)\.(js|ts|tsx|mjs)$#\1#g' \
         | xargs -I flnm echo "export * from 'flnm';" >> 'index.ts'
 
     find . -mindepth 1 -maxdepth 1 -type d \
+        | sort \
         | hasTsFile \
         | xargs -I dirnm echo "export * from 'dirnm/index';" >> 'index.ts'
 }
@@ -64,6 +66,7 @@ function createTop(){
     touch 'index.ts'
 
     find . -mindepth 1 -maxdepth 1 -type d \
+        | sort \
         | hasTsFile \
         | sed -E 's#^\./([^./]+)$#\1#g' \
         | xargs -I dirnm echo "export * as dirnm from './dirnm/index';" >> 'index.ts'

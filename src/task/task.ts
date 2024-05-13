@@ -29,7 +29,7 @@ export enum TaskStatus {
  */
 export abstract class TaskObject {
     // イベントリスナー
-    public taskListener: TaskListener;
+    public taskListener: TaskListener | null = null;
     // 実行ステータス
     public taskStatus: TaskStatus;
 
@@ -37,7 +37,7 @@ export abstract class TaskObject {
     public abstract run(): void;
 
     // コンストラクタ
-    public constructor(taskListener: TaskListener) {
+    public constructor(taskListener: TaskListener | null = null) {
         this.taskListener = taskListener;
         this.taskStatus = TaskStatus.removed;
     }
@@ -93,7 +93,9 @@ export class TaskManager {
             // タスク開始
             try {
                 target.taskStatus = TaskStatus.starting;
-                target.taskListener.onTaskStart(target);
+                if (target.taskListener !== null) {
+                    target.taskListener.onTaskStart(target);
+                }
             } catch (err) {
                 Debug.log(err);
             }
@@ -107,7 +109,9 @@ export class TaskManager {
                 // タスク中断
                 try {
                     target.taskStatus = TaskStatus.cancel;
-                    target.taskListener.onTaskCancel(target);
+                    if (target.taskListener !== null) {
+                        target.taskListener.onTaskCancel(target);
+                    }
                 } catch (err) {
                     Debug.log(err);
                 }
@@ -116,7 +120,9 @@ export class TaskManager {
             // タスク終了
             try {
                 target.taskStatus = TaskStatus.finish;
-                target.taskListener.onTaskFinish(target);
+                if (target.taskListener !== null) {
+                    target.taskListener.onTaskFinish(target);
+                }
             } catch (err) {
                 Debug.log(err);
             }

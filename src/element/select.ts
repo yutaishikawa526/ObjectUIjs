@@ -38,7 +38,7 @@ export class OptGroupElement extends Html.HTMLElementVariable<gOptGroup> {
 // デフォルトオプションのプロパティの基底クラス
 abstract class CanDefaultOptionProp {
     // オプションを作成する
-    abstract createOption(): OptionElement | OptGroupElement;
+    public abstract createOption(): OptionElement | OptGroupElement;
 }
 
 // デフォルトのオプションのプロパティ

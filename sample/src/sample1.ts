@@ -1,12 +1,12 @@
-import * as ObjUiJs from "objectuijs";
+import * as ObjUiJs from 'objectuijs';
 
-(function(){
+(function () {
     console.log('start');
 
     const wrapper = document.getElementsByTagName('html')[0];
     {
         let child;
-        while(child = wrapper.lastChild){
+        while ((child = wrapper.lastChild)) {
             child.remove();
         }
     }
@@ -18,9 +18,9 @@ import * as ObjUiJs from "objectuijs";
 
     newText.addToNode(wrapper);
 
-    const listener = new (class implements ObjUiJs.element.ClickEventListener{
+    const listener = new (class implements ObjUiJs.element.ClickEventListener {
         // クリックイベント
-        onElementClickSingle(element: ObjUiJs.element.HTMLElement, event: ObjUiJs.element.MouseEvent): void{
+        onElementClickSingle(element: ObjUiJs.element.HTMLElement, event: ObjUiJs.element.MouseEvent): void {
             newText.deleteChild(text);
             console.log('click');
 
@@ -32,9 +32,9 @@ import * as ObjUiJs from "objectuijs";
             newText.addChild(br);
         }
         // ダブルクリックイベント
-        onElementClickDBL(element: ObjUiJs.element.HTMLElement, event: ObjUiJs.element.MouseEvent): void{}
+        onElementClickDBL(element: ObjUiJs.element.HTMLElement, event: ObjUiJs.element.MouseEvent): void {}
         // 第1ボタン以外のクリックイベント
-        onElementClickAUX(element: ObjUiJs.element.HTMLElement, event: ObjUiJs.element.MouseEvent): void{}
+        onElementClickAUX(element: ObjUiJs.element.HTMLElement, event: ObjUiJs.element.MouseEvent): void {}
     })();
 
     newText.setClickEventListener(listener);

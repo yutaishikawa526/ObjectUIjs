@@ -11,7 +11,7 @@ type gHtml = globalThis.HTMLElement;
 
 // 特定の型の子要素を持てるHtmlElement
 abstract class HasChild<T extends gHtml, U extends Element.Element> extends Html.HTMLElementVariable<T> {
-    abstract getChildList(): Array<U>;
+    public abstract getChildList(): Array<U>;
 
     // childを指定して、何番目かを取得する
     // 子要素に存在しない場合はnullを返す
@@ -65,10 +65,10 @@ abstract class HasChild<T extends gHtml, U extends Element.Element> extends Html
 }
 
 // td,thのElement
-export class TableCellElement extends Html.HTMLElementVariable<gTCell> {
+class TableCellElement extends Html.HTMLElementVariable<gTCell> {
     // コンストラクタ
-    public constructor() {
-        super(document.createElement('td'));
+    public constructor(cell: gTCell) {
+        super(cell);
     }
 
     // cellの番号を取得する
@@ -80,6 +80,22 @@ export class TableCellElement extends Html.HTMLElementVariable<gTCell> {
         } else {
             return null;
         }
+    }
+}
+
+// tdタグのElement
+export class TableDataElement extends TableCellElement {
+    // コンストラクタ
+    public constructor() {
+        super(document.createElement('td'));
+    }
+}
+
+// trタグのElement
+export class TableHeadElement extends TableCellElement {
+    // コンストラクタ
+    public constructor() {
+        super(document.createElement('th'));
     }
 }
 

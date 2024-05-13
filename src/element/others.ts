@@ -9,6 +9,7 @@ type gPElement = globalThis.HTMLParagraphElement;
 type gBrElement = globalThis.HTMLBRElement;
 type gHrElement = globalThis.HTMLHRElement;
 type gLabelElement = globalThis.HTMLLabelElement;
+type gAElement = globalThis.HTMLAnchorElement;
 
 // divタグのElement
 export class DivElement extends Html.HTMLElementVariable<gDivElement> {
@@ -50,5 +51,12 @@ export class LabelElement extends Html.HTMLElementVariable<gLabelElement> {
     // コンストラクタ
     public constructor() {
         super(document.createElement('label'));
+    }
+}
+// aタグ
+export class AnchorElement extends Html.HTMLElementVariable<gAElement> {
+    // コンストラクタ
+    public constructor() {
+        super(document.createElement('a'));
     }
 }
