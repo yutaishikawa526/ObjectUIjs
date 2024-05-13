@@ -7,6 +7,7 @@ import * as Element from './element';
 type gMouseEvent = globalThis.MouseEvent;
 type gHtmlElement = globalThis.HTMLElement;
 type gCSSStyleDeclaration = globalThis.CSSStyleDeclaration;
+type gDOMTokenList = globalThis.DOMTokenList;
 
 // マウスイベントリスナー
 export interface MouseEventListener {
@@ -106,6 +107,8 @@ export class HTMLElement extends Element.Element {
     // styleのオブジェクト
     // 直接CSSを指定することで適用可能
     public readonly style: gCSSStyleDeclaration;
+    // クラス一覧のオブジェクト
+    public readonly classList: gDOMTokenList;
 
     // mouseイベントの最初のハンドラー
     private mouseEventHandler: null | MouseEventHander = null;
@@ -117,6 +120,7 @@ export class HTMLElement extends Element.Element {
         super(htmlElement);
         this.htmlElement = htmlElement;
         this.style = htmlElement.style;
+        this.classList = htmlElement.classList;
     }
 
     /*----------------- 一般に外から使用される --------------*/
