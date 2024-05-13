@@ -68,7 +68,7 @@ abstract class HasChild<T extends gHtml, U extends Element.Element> extends Html
 export class TableCellElement extends Html.HTMLElementVariable<gTCell> {
     // コンストラクタ
     public constructor() {
-        super(new globalThis.HTMLTableCellElement());
+        super(document.createElement('td'));
     }
 
     // cellの番号を取得する
@@ -92,7 +92,7 @@ export class TableRowElement extends HasChild<gTRow, TableCellElement> {
 
     // コンストラクタ
     public constructor() {
-        super(new globalThis.HTMLTableRowElement());
+        super(document.createElement('tr'));
     }
 
     // rowの一覧を取得する
@@ -137,7 +137,7 @@ export class TableElement extends HasChild<gTable, TableRowElement> {
 
     // コンストラクタ
     public constructor() {
-        super(new globalThis.HTMLTableElement());
+        super(document.createElement('table'));
     }
 
     // rowの一覧を取得する

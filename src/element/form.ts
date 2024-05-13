@@ -42,7 +42,7 @@ export class FormElement extends Html.HTMLElementVariable<gForm> {
 
     // コンストラクタ
     public constructor() {
-        super(new globalThis.HTMLFormElement());
+        super(document.createElement('form'));
         this.formItemList = [];
     }
 

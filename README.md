@@ -19,10 +19,7 @@ nvm alias default 'lts/*'
 
 3. typescript prettierのインストール
 ```bash
-npm install -D typescript prettier
-
-# typescriptの初期化
-npx tsc --init
+npm install
 ```
 
 # フォーマット
@@ -36,3 +33,9 @@ npm run format
 # コンパイル
 - `npm run build`でコンパイルを行う
 - `./dist`ディレクトリにコンパイル結果が格納される
+
+# サンプルのコンパイル
+- `npm run sample_compile`で`./sample/build`ディレクトリに出力する
+
+# 開発者向け
+- [create_index_ts.sh](./create_index_ts.sh)は[src](./src/)ディレクトリの中にindex.tsを適切に配置するシェル

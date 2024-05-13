@@ -12,7 +12,7 @@ type gOptGroup = globalThis.HTMLOptGroupElement;
 export class OptionElement extends Html.HTMLElementVariable<gOption> {
     // コンストラクタ
     public constructor() {
-        super(new globalThis.HTMLOptionElement());
+        super(document.createElement('option'));
     }
 
     // ラベルと値を設定する
@@ -26,7 +26,7 @@ export class OptionElement extends Html.HTMLElementVariable<gOption> {
 export class OptGroupElement extends Html.HTMLElementVariable<gOptGroup> {
     // コンストラクタ
     public constructor() {
-        super(new globalThis.HTMLOptGroupElement());
+        super(document.createElement('optgroup'));
     }
 
     // ラベルを設定する
@@ -89,8 +89,7 @@ export class DefaultOptGroupProp extends CanDefaultOptionProp {
 export class SelectElement extends FormItem.FormItemElementVariable<gSelect> {
     // コンストラクタ
     public constructor(formItemProp: FormItem.FormItemProp = new FormItem.FormItemProp()) {
-        const input = new globalThis.HTMLSelectElement();
-        super(input);
+        super(document.createElement('select'));
 
         this.setFormItemProp(formItemProp);
     }

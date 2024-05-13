@@ -8,6 +8,6 @@ type gButton = globalThis.HTMLButtonElement;
 export class ButtonElement extends FormItem.FormItemElementVariable<gButton> {
     // コンストラクタ
     public constructor() {
-        super(new globalThis.HTMLButtonElement());
+        super(document.createElement('button'));
     }
 }

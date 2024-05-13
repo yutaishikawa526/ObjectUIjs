@@ -27,8 +27,7 @@ export class TextareaProp extends FormItem.FormItemProp {
 export class TextareaElement extends FormItem.FormItemElementVariable<gTextarea> {
     // コンストラクタ
     public constructor(textareaProp: TextareaProp = new TextareaProp()) {
-        const textarea = new globalThis.HTMLTextAreaElement();
-        super(textarea);
+        super(document.createElement('textarea'));
 
         this.setTextareaProp(textareaProp);
     }

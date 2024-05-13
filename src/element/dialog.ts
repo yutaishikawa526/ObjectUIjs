@@ -37,7 +37,7 @@ export class DialogElement extends Html.HTMLElementVariable<gDialog> {
 
     // コンストラクタ
     public constructor() {
-        super(new globalThis.HTMLDialogElement());
+        super(document.createElement('dialog'));
     }
 
     // 閉じるイベントリスナーを設定する

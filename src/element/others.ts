@@ -14,41 +14,41 @@ type gLabelElement = globalThis.HTMLLabelElement;
 export class DivElement extends Html.HTMLElementVariable<gDivElement> {
     // コンストラクタ
     public constructor() {
-        super(new globalThis.HTMLDivElement());
+        super(document.createElement('div'));
     }
 }
 // spanタグ
 export class SpanElement extends Html.HTMLElementVariable<gSpanElement> {
     // コンストラクタ
     public constructor() {
-        super(new globalThis.HTMLSpanElement());
+        super(document.createElement('span'));
     }
 }
 // pタグ
 export class ParagraphElement extends Html.HTMLElementVariable<gPElement> {
     // コンストラクタ
     public constructor() {
-        super(new globalThis.HTMLParagraphElement());
+        super(document.createElement('p'));
     }
 }
 // brタグ
 export class BRElement extends Html.HTMLElementVariable<gBrElement> {
     // コンストラクタ
     public constructor() {
-        super(new globalThis.HTMLBRElement());
+        super(document.createElement('br'));
     }
 }
 // hrタグ
 export class HRElement extends Html.HTMLElementVariable<gHrElement> {
     // コンストラクタ
     public constructor() {
-        super(new globalThis.HTMLHRElement());
+        super(document.createElement('hr'));
     }
 }
 // Labelタグ
 export class LabelElement extends Html.HTMLElementVariable<gLabelElement> {
     // コンストラクタ
     public constructor() {
-        super(new globalThis.HTMLLabelElement());
+        super(document.createElement('label'));
     }
 }

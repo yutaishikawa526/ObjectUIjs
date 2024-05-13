@@ -8,8 +8,9 @@
   ],
   "scripts": {
     "build": "tsc",
+    "sample_compile": "cd './sample'; npm install; npm run build;",
     "prepublishOnly": "npm run build",
-    "format": "prettier --write ./src"
+    "format": "prettier --write ./src; prettier --write ./sample;"
   },
   "repository": {
     "type": "git",
@@ -17,7 +18,7 @@
   },
   "author": "yutaishikawa526",
   "license": "MIT",
-  "devDependencies": {
+  "dependencies": {
     "prettier": "^3.2.5",
     "typescript": "^5.4.5"
   }

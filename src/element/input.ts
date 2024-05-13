@@ -32,8 +32,7 @@ export class InputProp extends FormItem.FormItemProp {
 export class InputElement extends FormItem.FormItemElementVariable<gInput> {
     // コンストラクタ
     public constructor(inputProp: InputProp = new InputProp()) {
-        const input = new globalThis.HTMLInputElement();
-        super(input);
+        super(document.createElement('input'));
 
         this.setInputProp(inputProp);
     }
