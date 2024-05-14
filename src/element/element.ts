@@ -123,9 +123,13 @@ export class Element {
         this.needReappendNode = false;
 
         // 子要素のNodeを再設置
-        this.deleteChildren();
+        const pNode = this.element;
+        let child;
+        while ((child = pNode.lastChild)) {
+            pNode.removeChild(child);
+        }
         this.childElements.forEach((child: Element) => {
-            this.element.appendChild(child.element);
+            pNode.appendChild(child.element);
         });
     }
     // 描画処理
@@ -134,15 +138,6 @@ export class Element {
     }
 
     /*----------------- 内部で使用される --------------*/
-
-    // 子要素のNodeを全削除する
-    protected deleteChildren(): void {
-        const pNode = this.element;
-        let child;
-        while ((child = pNode.lastChild)) {
-            pNode.removeChild(child);
-        }
-    }
 
     // 描画が必要と設定する
     protected setNeedRender(): void {
@@ -226,6 +221,16 @@ export class Element {
                 return true;
             }
         });
+        this.onChildElementChanged();
+    }
+
+    // 子要素を全削除する
+    public deleteAllChildren(): void {
+        this.childElements.forEach((elem: Element) => {
+            elem.parentElement = null;
+            elem.onParentElementChanged();
+        });
+        this.childElements = [];
         this.onChildElementChanged();
     }
 

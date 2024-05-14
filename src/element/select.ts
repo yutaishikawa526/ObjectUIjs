@@ -3,6 +3,7 @@ selectとoptgroupとoptionのElement
 */
 import * as FormItem from './form_item';
 import * as Html from './html';
+import * as Text from './text';
 
 type gSelect = globalThis.HTMLSelectElement;
 type gOption = globalThis.HTMLOptionElement;
@@ -18,7 +19,9 @@ export class OptionElement extends Html.HTMLElementVariable<gOption> {
     // ラベルと値を設定する
     public setLabelValue(label: string, value: string): void {
         this.htmlVariable.setAttribute('value', value);
-        this.htmlVariable.textContent = label;
+        const text = new Text.TextElement();
+        text.setText(label);
+        this.addChild(text);
     }
 }
 
