@@ -16,6 +16,9 @@ class TimerObject extends Task.TaskObject {
 
         this.timerTask = timerTask;
         const interval = timerTask.getInterval();
+        if (interval < 10) {
+            throw new Error('タイマーイベントは10ms以上のインターバールが必要です。');
+        }
         const intervalId = setInterval(this.exeTask.bind(this), interval);
         this.intervalId = intervalId;
     }
@@ -103,5 +106,6 @@ export abstract class TimerTask {
     public abstract run(): void;
 
     // インターバルを取得する(ms)
+    // 10より小さいのは禁止
     public abstract getInterval(): number;
 }
