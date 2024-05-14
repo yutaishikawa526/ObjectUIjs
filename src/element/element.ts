@@ -66,7 +66,7 @@ export class ElementEventHander<T extends gEvent, U extends Element, V extends g
     // イベントをディスパッチする
     protected appendEvent(event: T, callback: (elem: U, e: ElementEvent<T>) => any): void {
         const eventTask = new ElementTask.EventTask<T, U>(callback, this.element, new ElementEvent<T>(event));
-        eventTask.dispatch();
+        eventTask.dispatch(true);
     }
 }
 
@@ -76,6 +76,8 @@ export class Element {
     private static nextElementId: number = 1;
     // 要素ID
     private readonly elementId: string;
+    // カスタム要素ID。未指定の場合は要素IDが振られる
+    private customElementId: string;
 
     // Nodeのオブジェクト
     protected readonly element: gNode;
@@ -93,6 +95,7 @@ export class Element {
         this.elementId = String(Element.nextElementId);
         Element.nextElementId++;
         this.element = element;
+        this.customElementId = this.elementId;
     }
 
     /**
@@ -166,6 +169,16 @@ export class Element {
     // 要素IDを取得する
     public getElementId(): string {
         return this.elementId;
+    }
+
+    // カスタム要素IDを取得する
+    public getCustomElementId(): string {
+        return this.customElementId;
+    }
+
+    // カスタム要素IDを設定する
+    public setCustomElementId(customElementId: string) {
+        this.customElementId = customElementId;
     }
 
     // 子要素を追加する

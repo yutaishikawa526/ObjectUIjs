@@ -74,12 +74,19 @@ class TableCellElement extends Html.HTMLElementVariable<gTCell> {
     // cellの番号を取得する
     // rowに設定されていない場合はnullを返す
     public getCellIndex(): number | null {
-        const parent = this.getParentElement();
-        if (parent instanceof TableRowElement) {
-            return parent.getChildIndex(this);
-        } else {
+        const parent = this.getParentRow();
+        if (parent === null) {
             return null;
+        } else {
+            return parent.getChildIndex(this);
         }
+    }
+
+    // 親のtrを取得する
+    // 親がないか、Trでない場合はnullを返す
+    public getParentRow(): TableRowElement | null {
+        const parent = this.getParentElement();
+        return parent instanceof TableRowElement ? parent : null;
     }
 }
 
@@ -129,12 +136,19 @@ export class TableRowElement extends HasChild<gTRow, TableCellElement> {
     // rowの番号を取得する
     // tableに設定されていない場合はnullを返す
     public getRowIndex(): number | null {
-        const parent = this.getParentElement();
-        if (parent instanceof TableElement) {
-            return parent.getChildIndex(this);
-        } else {
+        const parent = this.getParentTable();
+        if (parent === null) {
             return null;
+        } else {
+            return parent.getChildIndex(this);
         }
+    }
+
+    // 親のTableを取得する
+    // 親がないか、Tableでない場合はnullを返す
+    public getParentTable(): TableElement | null {
+        const parent = this.getParentElement();
+        return parent instanceof TableElement ? parent : null;
     }
 
     // 子要素に変化があった場合に呼び出される

@@ -51,10 +51,13 @@ export abstract class TaskObject {
         this.taskStatus = TaskStatus.removed;
     }
 
-    // ディスパッチする
-    public dispatch(): void {
+    /**
+     * ディスパッチする
+     * @param startLoopImmediately メインループが未起動の場合に即座に起動するかどうか
+     */
+    public dispatch(startLoopImmediately: boolean = false): void {
         const tskManager = TaskManager.getInstance();
-        tskManager.dispatch(this);
+        tskManager.dispatch(this, startLoopImmediately);
     }
 
     // カスタムタスクIDを設定する
@@ -151,14 +154,23 @@ export class TaskManager {
         this.taskExecting = false;
     }
 
-    // タスクをディスパッチする
-    public dispatch(task: TaskObject) {
+    /**
+     * タスクをディスパッチする
+     * @param task 対象のタスク
+     * @param startLoopImmediately メインループが未起動の場合に即座に起動するかどうか
+     */
+    public dispatch(task: TaskObject, startLoopImmediately: boolean = false) {
         this.taskQue.push(task);
         task.taskStatus = TaskStatus.dispatch;
-        if (!this.isMainLoop() && !this.willTaskExec) {
-            this.willTaskExec = true;
-            // メインループではないときは、いったん現在のスレッドが完了してからメインループを起動する
-            setTimeout(this.main.bind(this), 0);
+        if (!this.isMainLoop()) {
+            if (startLoopImmediately) {
+                // 即座にメインループを起動
+                this.main();
+            } else {
+                this.willTaskExec = true;
+                // メインループではないときは、いったん現在のスレッドが完了してからメインループを起動する
+                setTimeout(this.main.bind(this), 0);
+            }
         }
     }
 

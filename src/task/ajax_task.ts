@@ -62,7 +62,7 @@ export class TaskAjax extends Task.TaskObject implements Task.TaskListener {
         this.xhr.addEventListener('loadend', (event: gProgressEvent) => {
             this.progressEvent = event;
             const taskManager = Task.TaskManager.getInstance();
-            taskManager.dispatch(this);
+            taskManager.dispatch(this, true);
         });
     }
 

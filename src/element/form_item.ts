@@ -112,6 +112,11 @@ export class FormItemElement extends Html.HTMLElementVariable<UnionFormItem> {
             input.setAttribute('diable', 'true');
         }
     }
+
+    // 制約チェックを行い、引っかかる場合は報告する
+    public reportValidity(): boolean {
+        return this.htmlVariable.reportValidity();
+    }
 }
 
 // FormItemElementで対象のUnionFormItemをジェネリクスで指定して継承しやすくする

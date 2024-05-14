@@ -1,9 +1,9 @@
-import * as ObjUiJs from 'objectuijs';
+import { element as oujElement, util as oujUtil } from 'objectuijs';
 
 console.log('start');
 
 // トップ階層
-class Top extends ObjUiJs.element.DivElement implements ObjUiJs.element.ClickEventListener {
+class Top extends oujElement.DivElement implements oujElement.ClickEventListener {
     // タブと本文のペア
     protected headerContentPairList: Array<HeaderContentPair> = [];
     // タブのラッパー
@@ -78,17 +78,17 @@ class Top extends ObjUiJs.element.DivElement implements ObjUiJs.element.ClickEve
     }
 
     // ヘッダークリック時、本文の入れ替え
-    public onElementClickSingle(element: ObjUiJs.element.HTMLElement, event: ObjUiJs.element.MouseEvent): void {
+    public onElementClickSingle(element: oujElement.HTMLElement, event: oujElement.MouseEvent): void {
         const elementId = element.getElementId();
         this.applySelect(elementId);
     }
 
-    public onElementClickDBL(element: ObjUiJs.element.HTMLElement, event: ObjUiJs.element.MouseEvent): void {}
-    public onElementClickAUX(element: ObjUiJs.element.HTMLElement, event: ObjUiJs.element.MouseEvent): void {}
+    public onElementClickDBL(element: oujElement.HTMLElement, event: oujElement.MouseEvent): void {}
+    public onElementClickAUX(element: oujElement.HTMLElement, event: oujElement.MouseEvent): void {}
 }
 
 // トップ階層のタブのラッパー
-class TopHeaderWrapper extends ObjUiJs.element.DivElement {
+class TopHeaderWrapper extends oujElement.DivElement {
     // タブのクラス
     public static readonly TAB_CLASS = 'header_wrapper';
 
@@ -101,10 +101,10 @@ class TopHeaderWrapper extends ObjUiJs.element.DivElement {
 }
 
 // トップ階層の本文のラッパー
-class TopContentWrapper extends ObjUiJs.element.DivElement {}
+class TopContentWrapper extends oujElement.DivElement {}
 
 // トップ階層のタブの基底クラス
-class BaseTopHeader extends ObjUiJs.element.DivElement {
+class BaseTopHeader extends oujElement.DivElement {
     // 選択中のときのクラス
     public static readonly SELECTED_CLASS = 'header_selected';
     // 選択中かどうか
@@ -114,7 +114,7 @@ class BaseTopHeader extends ObjUiJs.element.DivElement {
     public constructor(headerTitle: string) {
         super();
 
-        const text = new ObjUiJs.element.TextElement();
+        const text = new oujElement.TextElement();
         text.setText(headerTitle);
         this.addChild(text);
     }
@@ -136,7 +136,7 @@ class BaseTopHeader extends ObjUiJs.element.DivElement {
 }
 
 // 本文の基底クラス
-class BaseContent extends ObjUiJs.element.DivElement {}
+class BaseContent extends oujElement.DivElement {}
 
 // タブと本文のペア
 class HeaderContentPair {
@@ -151,23 +151,24 @@ class HeaderContentPair {
 }
 
 // サンプルページ1
-class ContentPage1 extends BaseContent implements ObjUiJs.element.ClickEventListener {
+class ContentPage1 extends BaseContent implements oujElement.ClickEventListener {
     // クリックのPタグのクラス
     public static readonly CLICK_P_CLASS: string = 'bdiu32fj0egb';
     // クリックのPタグ
-    protected clickP: ObjUiJs.element.ParagraphElement;
+    protected clickP: oujElement.ParagraphElement;
 
     // コンストラクタ
     public constructor() {
         super();
 
-        const clickP = new ObjUiJs.element.ParagraphElement();
-        const text = new ObjUiJs.element.TextElement();
+        const clickP = new oujElement.ParagraphElement();
+        const text = new oujElement.TextElement();
         text.setText('click here');
         clickP.addChild(text);
         clickP.classList.add(ContentPage1.CLICK_P_CLASS);
 
         this.addChild(clickP);
+        this.addChild(new oujElement.HRElement());
 
         clickP.setClickEventListener(this);
 
@@ -175,119 +176,366 @@ class ContentPage1 extends BaseContent implements ObjUiJs.element.ClickEventList
     }
 
     // クリックイベント
-    public onElementClickSingle(element: ObjUiJs.element.HTMLElement, event: ObjUiJs.element.MouseEvent): void {
+    public onElementClickSingle(element: oujElement.HTMLElement, event: oujElement.MouseEvent): void {
         if (this.clickP.getElementId() === element.getElementId()) {
             // pタグクリック時
-            this.addChild(new ObjUiJs.element.HRElement());
-            const span = new ObjUiJs.element.SpanElement();
+            const span = new oujElement.SpanElement();
             this.addChild(span);
             span.style.color = 'red';
-            const text = new ObjUiJs.element.TextElement();
+            span.style.marginRight = '5px';
+            const text = new oujElement.TextElement();
             span.addChild(text);
             text.setText('clicked!!!');
         }
     }
     // ダブルクリックイベント
-    public onElementClickDBL(element: ObjUiJs.element.HTMLElement, event: ObjUiJs.element.MouseEvent): void {}
+    public onElementClickDBL(element: oujElement.HTMLElement, event: oujElement.MouseEvent): void {}
     // 第1ボタン以外のクリックイベント
-    public onElementClickAUX(element: ObjUiJs.element.HTMLElement, event: ObjUiJs.element.MouseEvent): void {}
+    public onElementClickAUX(element: oujElement.HTMLElement, event: oujElement.MouseEvent): void {}
 }
 
 // サンプルページ2
 class ContentPage2
     extends BaseContent
-    implements ObjUiJs.element.ClickEventListener, ObjUiJs.element.FormItemEventListener
+    implements oujElement.ClickEventListener, oujElement.FormItemEventListener, oujElement.FormSubmitEventListener
 {
     // フォーム
-    protected form: ObjUiJs.element.FormElement;
+    protected form: oujElement.FormElement;
+    // 入力項目の変化を表示するフィールド
+    protected showResultField: oujElement.DivElement;
 
     // コンストラクタ
     public constructor() {
         super();
 
-        const form = new ObjUiJs.element.FormElement();
+        this.showResultField = new oujElement.DivElement();
+        this.addChild(this.showResultField);
+
+        const form = new oujElement.FormElement();
         this.form = form;
         this.addChild(form);
+        form.setFormSubmitListener(this);
 
         // フォームアイテム作成
-        const select = new ObjUiJs.element.SelectElement(
-            new ObjUiJs.element.FormItemProp('a', 't', true, false, false),
-        );
+        const select = new oujElement.SelectElement(new oujElement.FormItemProp('a', 't', true, false, false));
         select.setOptionListByProp([
-            new ObjUiJs.element.DefaultOptionProp('label1,value:a', 'a'),
-            new ObjUiJs.element.DefaultOptionProp('label2,value:b', 'b'),
-            new ObjUiJs.element.DefaultOptGroupProp('group1', [
-                new ObjUiJs.element.DefaultOptionProp('label3,value:c', 'c'),
-                new ObjUiJs.element.DefaultOptionProp('label4,value:d', 'd'),
+            new oujElement.DefaultOptionProp('label1,value:a', 'a'),
+            new oujElement.DefaultOptionProp('label2,value:b', 'b'),
+            new oujElement.DefaultOptGroupProp('group1', [
+                new oujElement.DefaultOptionProp('label3,value:c', 'c'),
+                new oujElement.DefaultOptionProp('label4,value:d', 'd'),
             ]),
         ]);
         form.addChild(select);
-        form.addChild(new ObjUiJs.element.BRElement());
+        form.addChild(new oujElement.BRElement());
 
-        const textarea = new ObjUiJs.element.TextareaElement(
-            new ObjUiJs.element.TextareaProp('default value', 'xxx', true, false, false, 'place holder'),
+        const textarea = new oujElement.TextareaElement(
+            new oujElement.TextareaProp('default value', 'xxx', true, false, false, 'place holder'),
         );
         form.addChild(textarea);
-        form.addChild(new ObjUiJs.element.BRElement());
+        form.addChild(new oujElement.BRElement());
 
-        const checkbox1 = new ObjUiJs.element.InputElement(
-            new ObjUiJs.element.InputProp('a', 'checkbox', 'checkboxName', true, false, false, '', false),
+        const checkbox1 = new oujElement.InputElement(
+            new oujElement.InputProp('a', 'checkbox', 'checkboxName', false, false, false, '', false),
         );
-        const checkbox2 = new ObjUiJs.element.InputElement(
-            new ObjUiJs.element.InputProp('b', 'checkbox', 'checkboxName', true, false, false, '', true),
+        const checkbox2 = new oujElement.InputElement(
+            new oujElement.InputProp('b', 'checkbox', 'checkboxName', false, false, false, '', true),
         );
-        const checkbox3 = new ObjUiJs.element.InputElement(
-            new ObjUiJs.element.InputProp('c', 'checkbox', 'checkboxName', true, false, false, '', false),
+        const checkbox3 = new oujElement.InputElement(
+            new oujElement.InputProp('c', 'checkbox', 'checkboxName', false, false, false, '', false),
         );
         form.addChild(checkbox1);
         form.addChild(checkbox2);
         form.addChild(checkbox3);
-        form.addChild(new ObjUiJs.element.BRElement());
+        form.addChild(new oujElement.BRElement());
 
-        const dateInput = new ObjUiJs.element.InputElement(
-            new ObjUiJs.element.InputProp('2000-01-01', 'date', 'dateName', true, false, false, '', false),
+        const dateInput = new oujElement.InputElement(
+            new oujElement.InputProp('2000-01-01', 'date', 'dateName', true, false, false, '', false),
         );
         form.addChild(dateInput);
-        form.addChild(new ObjUiJs.element.BRElement());
+        form.addChild(new oujElement.BRElement());
 
-        const textInput = new ObjUiJs.element.InputElement(
-            new ObjUiJs.element.InputProp('hhgyhdyt', 'text', 'dateName', true, false, false, '', false),
+        const textInput = new oujElement.InputElement(
+            new oujElement.InputProp('hhgyhdyt', 'text', 'dateName', true, false, false, '', false),
         );
         form.addChild(textInput);
-        form.addChild(new ObjUiJs.element.BRElement());
+        form.addChild(new oujElement.BRElement());
 
-        const submitBtn = new ObjUiJs.element.InputElement(
-            new ObjUiJs.element.InputProp('イベント設定', 'button', 'dateName', true, false, false, '', false),
+        const eventBtn = new oujElement.InputElement(
+            new oujElement.InputProp('イベント設定', 'button', 'btn', true, false, false, '', false),
+        );
+        form.addChild(eventBtn);
+        eventBtn.setClickEventListener(this);
+
+        const submitBtn = new oujElement.InputElement(
+            new oujElement.InputProp('送信', 'submit', 'submitBtn', true, false, false, '', false),
         );
         form.addChild(submitBtn);
-        submitBtn.setClickEventListener(this);
     }
 
     // クリックイベント
-    public onElementClickSingle(element: ObjUiJs.element.HTMLElement, event: ObjUiJs.element.MouseEvent): void {
+    public onElementClickSingle(element: oujElement.HTMLElement, event: oujElement.MouseEvent): void {
         console.log(this.form);
         console.log(this.form.getFormItemList());
 
-        this.form.getFormItemList().forEach((formItem: ObjUiJs.element.FormItemElement) => {
+        this.form.getFormItemList().forEach((formItem: oujElement.FormItemElement) => {
             formItem.setFormItemListener(this);
         });
     }
     // ダブルクリックイベント
-    public onElementClickDBL(element: ObjUiJs.element.HTMLElement, event: ObjUiJs.element.MouseEvent): void {}
+    public onElementClickDBL(element: oujElement.HTMLElement, event: oujElement.MouseEvent): void {}
     // 第1ボタン以外のクリックイベント
-    public onElementClickAUX(element: ObjUiJs.element.HTMLElement, event: ObjUiJs.element.MouseEvent): void {}
+    public onElementClickAUX(element: oujElement.HTMLElement, event: oujElement.MouseEvent): void {}
 
     // 入力イベント
-    public onFormItemInput(element: ObjUiJs.element.FormItemElement, event: ObjUiJs.element.FormItemEvent): void {}
+    public onFormItemInput(element: oujElement.FormItemElement, event: oujElement.FormItemEvent): void {}
     // 変更イベント
-    public onFormItemChange(element: ObjUiJs.element.FormItemElement, event: ObjUiJs.element.FormItemEvent): void {
-        console.log(element);
+    public onFormItemChange(element: oujElement.FormItemElement, event: oujElement.FormItemEvent): void {
+        const showF = this.showResultField;
+        const val = element.getValue();
+        const text = new oujElement.TextElement();
+        text.setText('新しい値:' + val);
+        showF.deleteAllChildren();
+        showF.addChild(text);
     }
+
+    // 入力イベント
+    public onFormSubmit(element: oujElement.FormElement, event: oujElement.SubmitEvent): void {
+        console.log('送信が実施されます。');
+        alert('送信が実施されます。');
+    }
+}
+
+// サンプルページ3用のテーブル
+class AddDeleteTable
+    extends oujElement.TableElement
+    implements oujElement.ClickEventListener, oujElement.DragEventListener
+{
+    // テーブルのクラス
+    public static readonly TABLE_CLASS = 'gbnk893hfugr33';
+    // ヘッダーの一覧
+    protected static readonly HEADER_LIST: Array<string> = ['', 'タイトル', '詳細', '削除'];
+    // 削除ボタンのID
+    protected static readonly DELETE_BTN_ID = 'delete_btn_id';
+    // 削除ボタンの要素IDとtdの要素のマップ
+    protected deleteBtn2TdMap: Array<{ deleteBtnId: string; td: oujElement.TableDataElement }> = [];
+    // ドラッグ中のTr
+    protected draggingRow: oujElement.TableRowElement | null = null;
+
+    // コンストラクタ
+    public constructor() {
+        super();
+
+        this.classList.add(AddDeleteTable.TABLE_CLASS);
+
+        this.initialize();
+    }
+
+    // 初期化
+    protected initialize(): void {
+        // ヘッダーの作成
+        const tr = new oujElement.TableRowElement();
+        this.addChild(tr);
+        AddDeleteTable.HEADER_LIST.forEach((label: string) => {
+            const th = new oujElement.TableHeadElement();
+            th.style.overflow = 'auto';
+            th.style.resize = 'horizontal';
+            th.style.textAlign = 'center';
+            th.addChild(new oujElement.TextElement(label));
+            tr.addChild(th);
+        });
+
+        // 本文の初期値の作成
+        this.addSpecializedRow({ title: '初期値1', detail: '詳細1' });
+        this.addSpecializedRow({ title: '初期値2', detail: '詳細2' });
+        this.addSpecializedRow({ title: '初期値3', detail: '詳細3' });
+    }
+
+    // 行を追加
+    public addSpecializedRow(rowData: { title: string; detail: string }): void {
+        const tr = new oujElement.TableRowElement();
+        tr.setDragEventListener(this);
+        this.addChild(tr);
+
+        const td1 = new oujElement.TableDataElement();
+        td1.addChild(new oujElement.TextElement('≡'));
+        td1.style.cursor = 'move';
+        td1.setDraggable(true);
+
+        const td2 = new oujElement.TableDataElement();
+        td2.addChild(new oujElement.TextElement(rowData.title));
+
+        const td3 = new oujElement.TableDataElement();
+        td3.addChild(new oujElement.TextElement(rowData.detail));
+
+        const td4 = new oujElement.TableDataElement();
+        const delBtn = new oujElement.InputElement(
+            new oujElement.InputProp('削除', 'button', '', false, false, false, '', false),
+        );
+        const label = new oujElement.LabelElement();
+        label.addChild(delBtn);
+        td4.addChild(label);
+        delBtn.setCustomElementId(AddDeleteTable.DELETE_BTN_ID);
+        delBtn.setClickEventListener(this);
+        this.deleteBtn2TdMap.push({ deleteBtnId: delBtn.getElementId(), td: td4 });
+
+        tr.addChild(td1);
+        tr.addChild(td2);
+        tr.addChild(td3);
+        tr.addChild(td4);
+
+        td1.style.textAlign = 'center';
+        td2.style.textAlign = 'center';
+        td3.style.textAlign = 'center';
+        td4.style.textAlign = 'center';
+    }
+
+    // クリックイベント
+    public onElementClickSingle(element: oujElement.HTMLElement, event: oujElement.MouseEvent): void {
+        const elementId = element.getElementId();
+        if (element.getCustomElementId() === AddDeleteTable.DELETE_BTN_ID) {
+            // 削除ボタンクリック
+            let matchIndex = this.deleteBtn2TdMap.findIndex(
+                (row: { deleteBtnId: string; td: oujElement.TableDataElement }) => {
+                    return row.deleteBtnId === elementId;
+                },
+            );
+            if (matchIndex === -1) {
+                return;
+            }
+            const matchTd = this.deleteBtn2TdMap[matchIndex].td;
+            const tr = matchTd.getParentRow();
+            if (tr === null) {
+                return;
+            }
+            tr.remove();
+            this.deleteBtn2TdMap.splice(matchIndex, 1);
+        }
+    }
+    // ダブルクリックイベント
+    public onElementClickDBL(element: oujElement.HTMLElement, event: oujElement.DragEvent): void {}
+    // 第1ボタン以外のクリックイベント
+    public onElementClickAUX(element: oujElement.HTMLElement, event: oujElement.DragEvent): void {}
+
+    // ドラッグ開始
+    public onElementDragStart(element: oujElement.HTMLElement, event: oujElement.DragEvent): void {
+        if (element instanceof oujElement.TableRowElement) {
+            element.style.backgroundColor = '#ccc';
+            this.draggingRow = element;
+        }
+    }
+    // ドラッグ中
+    public onElementDrag(element: oujElement.HTMLElement, event: oujElement.DragEvent): void {}
+    // ドラッグ終了直前
+    public onElementDragEnd(element: oujElement.HTMLElement, event: oujElement.DragEvent): void {
+        if (element instanceof oujElement.TableRowElement) {
+            element.style.backgroundColor = '';
+            this.draggingRow = null;
+        }
+    }
+    // ドラッグ終了
+    public onElementDrop(element: oujElement.HTMLElement, event: oujElement.DragEvent): void {
+        if (element instanceof oujElement.TableRowElement) {
+            element.style.backgroundColor = '';
+            this.draggingRow = null;
+        }
+    }
+    // 妥当なドロップターゲットに入った
+    public onElementDragEnter(element: oujElement.HTMLElement, event: oujElement.DragEvent): void {}
+    // 妥当なドロップターゲットの上にある
+    public onElementDragOver(element: oujElement.HTMLElement, event: oujElement.DragEvent): void {
+        if (element instanceof oujElement.TableRowElement) {
+            if (this.draggingRow === null) {
+                return; // ドラッグ対象が全く別物
+            }
+            const rowIndex = element.getRowIndex();
+            if (rowIndex === null) {
+                return;
+            }
+            event.event.preventDefault();
+
+            this.deleteChild(this.draggingRow);
+            this.insertChildBeforeChildIndex(rowIndex, this.draggingRow);
+        }
+    }
+    // 妥当なドロップターゲットから離れた
+    public onElementDragLeave(element: oujElement.HTMLElement, event: oujElement.DragEvent): void {}
+}
+
+// サンプルページ3
+class ContentPage3 extends BaseContent implements oujElement.ClickEventListener {
+    // 追加ボタンのID
+    protected static readonly ADD_BTN_ID = 'add_btn_id';
+    // テーブル
+    protected table: AddDeleteTable;
+    // タイトル入力欄
+    protected titleInput: oujElement.InputElement;
+    // 詳細入力欄
+    protected detailInput: oujElement.InputElement;
+    // 追加ボタン
+    protected addButton: oujElement.InputElement;
+
+    // コンストラクタ
+    public constructor() {
+        super();
+
+        this.table = new AddDeleteTable();
+
+        this.titleInput = new oujElement.InputElement(
+            new oujElement.InputProp('', 'text', '', true, false, false, 'タイトルを入力してください。', false),
+        );
+        this.detailInput = new oujElement.InputElement(
+            new oujElement.InputProp('', 'text', '', true, false, false, '詳細を入力してください。', false),
+        );
+        this.addButton = new oujElement.InputElement(
+            new oujElement.InputProp('追加', 'button', '', true, false, false, '', false),
+        );
+        this.addButton.setCustomElementId(ContentPage3.ADD_BTN_ID);
+        this.addButton.setClickEventListener(this);
+
+        this.initialize();
+    }
+
+    // 初期化
+    protected initialize(): void {
+        // 本文作成
+
+        this.addChild(this.table);
+
+        const label1 = new oujElement.LabelElement();
+        const label2 = new oujElement.LabelElement();
+        const label3 = new oujElement.LabelElement();
+
+        label1.addChild(this.titleInput);
+        label1.addChild(this.detailInput);
+        label1.addChild(this.addButton);
+
+        this.addChild(label1);
+        this.addChild(label2);
+        this.addChild(label3);
+    }
+
+    // クリックイベント
+    public onElementClickSingle(element: oujElement.HTMLElement, event: oujElement.MouseEvent): void {
+        if (element.getCustomElementId() === ContentPage3.ADD_BTN_ID) {
+            // 追加ボタンクリック
+            if (!this.titleInput.reportValidity() || !this.detailInput.reportValidity()) {
+                return;
+            }
+
+            this.table.addSpecializedRow({ title: this.titleInput.getValue(), detail: this.detailInput.getValue() });
+        }
+    }
+    // ダブルクリックイベント
+    public onElementClickDBL(element: oujElement.HTMLElement, event: oujElement.MouseEvent): void {}
+    // 第1ボタン以外のクリックイベント
+    public onElementClickAUX(element: oujElement.HTMLElement, event: oujElement.MouseEvent): void {}
 }
 
 const toppage = new Top([
     new HeaderContentPair(new BaseTopHeader('ヘッダー1'), new ContentPage1()),
     new HeaderContentPair(new BaseTopHeader('ヘッダー2'), new ContentPage2()),
+    new HeaderContentPair(new BaseTopHeader('ヘッダー3'), new ContentPage3()),
 ]);
 
 const wrapper = document.getElementsByTagName('body')[0];
@@ -301,16 +549,16 @@ const wrapper = document.getElementsByTagName('body')[0];
 toppage.addToNode(wrapper);
 
 // css作成
-ObjUiJs.util.addStyleSheet({
+oujUtil.addStyleSheet({
     media: 'screen',
     cssRules: [
         {
             selectorText: '.' + ContentPage1.CLICK_P_CLASS,
-            cssTextList: ['color:red', 'mouse:pointer', 'background-color:yellow'],
+            cssTextList: ['color:red', 'cursor:pointer', 'background-color:yellow', 'width:fit-content'],
         },
     ],
 });
-ObjUiJs.util.addStyleSheet({
+oujUtil.addStyleSheet({
     media: 'screen',
     cssRules: [
         {
@@ -319,12 +567,34 @@ ObjUiJs.util.addStyleSheet({
         },
     ],
 });
-ObjUiJs.util.addStyleSheet({
+oujUtil.addStyleSheet({
     media: 'screen',
     cssRules: [
         {
             selectorText: '.' + TopHeaderWrapper.TAB_CLASS,
-            cssTextList: ['display:flex'],
+            cssTextList: ['display:flex', 'cursor:pointer', 'width:fit-content'],
         },
     ],
 });
+oujUtil.addStyleSheet({
+    media: 'screen',
+    cssRules: [
+        {
+            selectorText:
+                '.' +
+                AddDeleteTable.TABLE_CLASS +
+                ', .' +
+                AddDeleteTable.TABLE_CLASS +
+                ' td' +
+                ', .' +
+                AddDeleteTable.TABLE_CLASS +
+                ' th' +
+                ', .' +
+                AddDeleteTable.TABLE_CLASS +
+                ' tr',
+            cssTextList: ['border:2px solid #000;', 'border-collapse:collapse'],
+        },
+    ],
+});
+
+console.log('end');

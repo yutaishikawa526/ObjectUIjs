@@ -8,8 +8,12 @@ type gText = globalThis.Text;
 // TextのElement
 export class TextElement extends Element.NodeElementVariable<gText> {
     // コンストラクタ
-    public constructor() {
+    public constructor(text: string | null = null) {
         super(new globalThis.Text());
+
+        if (text !== null) {
+            this.setText(text);
+        }
     }
 
     // 文字列を取得する

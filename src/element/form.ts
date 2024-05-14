@@ -20,11 +20,11 @@ export type SubmitEvent = Element.ElementEvent<gSubmitEvent>;
 // 入力変更イベントハンドラー
 class FormSubmitEventHander extends Element.ElementEventHander<gSubmitEvent, FormElement, gForm> {
     // コンストラクタ
-    public constructor(fiListener: FormSubmitEventListener, element: FormElement) {
+    public constructor(formListener: FormSubmitEventListener, element: FormElement) {
         const listenter = [
             {
                 key: 'submit',
-                callback: fiListener.onFormSubmit.bind(fiListener),
+                callback: formListener.onFormSubmit.bind(formListener),
             },
         ];
         super(listenter, element);
@@ -46,43 +46,7 @@ export class FormElement extends Html.HTMLElementVariable<gForm> {
         this.formItemList = [];
     }
 
-    // actionを設定する
-    public setAction(action: string) {
-        this.htmlVariable.setAttribute('action', action);
-    }
-
-    // Methodを指定する
-    public setMethod(method: string) {
-        this.htmlVariable.setAttribute('method', method);
-    }
-
-    // targetを指定する
-    public setTarget(target: string) {
-        this.htmlVariable.setAttribute('target', target);
-    }
-
-    // フォームアイテムの一覧を取得する
-    public getFormItemList(): Array<FormItem.FormItemElement> {
-        this.recalcFormItemList();
-        return this.formItemList;
-    }
-
-    // 送信イベントリスナーを設定する
-    public setFormItemListener(formSubmitListener: FormSubmitEventListener | null): void {
-        if (this.formSubmitEventHandler !== null) {
-            // 登録済みイベントを解除
-            const handler = this.formSubmitEventHandler;
-            handler.removeFrom(this.htmlVariable);
-            this.formSubmitEventHandler = null;
-        }
-        if (formSubmitListener === null) {
-            return;
-        }
-        // イベント登録
-        const handler = new FormSubmitEventHander(formSubmitListener, this);
-        this.formSubmitEventHandler = handler;
-        handler.addTo(this.htmlVariable);
-    }
+    /*----------------- 内部で使用される --------------*/
 
     // 子要素に変化があった場合に呼び出される
     protected onChildElementChanged(): void {
@@ -106,5 +70,50 @@ export class FormElement extends Html.HTMLElementVariable<gForm> {
                 this.formItemList.push(element);
             }
         });
+    }
+
+    /*----------------- 一般に外から使用される --------------*/
+
+    // actionを設定する
+    public setAction(action: string) {
+        this.htmlVariable.setAttribute('action', action);
+    }
+
+    // Methodを指定する
+    public setMethod(method: string) {
+        this.htmlVariable.setAttribute('method', method);
+    }
+
+    // targetを指定する
+    public setTarget(target: string) {
+        this.htmlVariable.setAttribute('target', target);
+    }
+
+    // フォームアイテムの一覧を取得する
+    public getFormItemList(): Array<FormItem.FormItemElement> {
+        this.recalcFormItemList();
+        return this.formItemList;
+    }
+
+    // 送信イベントリスナーを設定する
+    public setFormSubmitListener(formSubmitListener: FormSubmitEventListener | null): void {
+        if (this.formSubmitEventHandler !== null) {
+            // 登録済みイベントを解除
+            const handler = this.formSubmitEventHandler;
+            handler.removeFrom(this.htmlVariable);
+            this.formSubmitEventHandler = null;
+        }
+        if (formSubmitListener === null) {
+            return;
+        }
+        // イベント登録
+        const handler = new FormSubmitEventHander(formSubmitListener, this);
+        this.formSubmitEventHandler = handler;
+        handler.addTo(this.htmlVariable);
+    }
+
+    // 制約チェックを行い、引っかかる場合は報告する
+    public reportValidity(): boolean {
+        return this.htmlVariable.reportValidity();
     }
 }

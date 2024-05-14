@@ -8,6 +8,8 @@ type gMouseEvent = globalThis.MouseEvent;
 type gHtmlElement = globalThis.HTMLElement;
 type gCSSStyleDeclaration = globalThis.CSSStyleDeclaration;
 type gDOMTokenList = globalThis.DOMTokenList;
+type gDOMRect = globalThis.DOMRect;
+type gDragEvent = globalThis.DragEvent;
 
 // マウスイベントリスナー
 export interface MouseEventListener {
@@ -37,8 +39,28 @@ export interface ClickEventListener {
     onElementClickAUX(element: HTMLElement, event: MouseEvent): void;
 }
 
+// ドラッグイベントリスナー
+export interface DragEventListener {
+    // ドラッグ開始
+    onElementDragStart(element: HTMLElement, event: DragEvent): void;
+    // ドラッグ中
+    onElementDrag(element: HTMLElement, event: DragEvent): void;
+    // ドラッグ終了直前
+    onElementDragEnd(element: HTMLElement, event: DragEvent): void;
+    // ドラッグ終了
+    onElementDrop(element: HTMLElement, event: DragEvent): void;
+    // 妥当なドロップターゲットに入った
+    onElementDragEnter(element: HTMLElement, event: DragEvent): void;
+    // 妥当なドロップターゲットの上にある
+    onElementDragOver(element: HTMLElement, event: DragEvent): void;
+    // 妥当なドロップターゲットから離れた
+    onElementDragLeave(element: HTMLElement, event: DragEvent): void;
+}
+
 // マウスイベント
 export type MouseEvent = Element.ElementEvent<gMouseEvent>;
+// ドラッグイベント
+export type DragEvent = Element.ElementEvent<gDragEvent>;
 
 // マウスイベントハンドラー
 class MouseEventHander extends Element.ElementEventHander<gMouseEvent, HTMLElement, gHtmlElement> {
@@ -100,6 +122,45 @@ class ClickEventHander extends Element.ElementEventHander<gMouseEvent, HTMLEleme
     }
 }
 
+// ドラッグイベントハンドラー
+class DragEventHander extends Element.ElementEventHander<gDragEvent, HTMLElement, gHtmlElement> {
+    // コンストラクタ
+    public constructor(dragListener: DragEventListener, element: HTMLElement) {
+        const listenter = [
+            {
+                key: 'dragstart',
+                callback: dragListener.onElementDragStart.bind(dragListener),
+            },
+            {
+                key: 'drag',
+                callback: dragListener.onElementDrag.bind(dragListener),
+            },
+            {
+                key: 'dragend',
+                callback: dragListener.onElementDragEnd.bind(dragListener),
+            },
+            {
+                key: 'drop',
+                callback: dragListener.onElementDrop.bind(dragListener),
+            },
+
+            {
+                key: 'dragenter',
+                callback: dragListener.onElementDragEnter.bind(dragListener),
+            },
+            {
+                key: 'dragover',
+                callback: dragListener.onElementDragOver.bind(dragListener),
+            },
+            {
+                key: 'dragleave',
+                callback: dragListener.onElementDragLeave.bind(dragListener),
+            },
+        ];
+        super(listenter, element);
+    }
+}
+
 // HTMLの要素
 export class HTMLElement extends Element.Element {
     // Nodeのオブジェクト
@@ -110,10 +171,12 @@ export class HTMLElement extends Element.Element {
     // クラス一覧のオブジェクト
     public readonly classList: gDOMTokenList;
 
-    // mouseイベントの最初のハンドラー
+    // mouseイベントのハンドラー
     private mouseEventHandler: null | MouseEventHander = null;
-    // clickイベントの最初のハンドラー
+    // clickイベントのハンドラー
     private clickEventHandler: null | ClickEventHander = null;
+    // dragイベントのハンドラー
+    private dragEventHandler: null | DragEventHander = null;
 
     // コンストラクタ
     public constructor(htmlElement: gHtmlElement) {
@@ -150,6 +213,21 @@ export class HTMLElement extends Element.Element {
         this.htmlElement.blur();
     }
 
+    // drag可能性を設定する
+    public setDraggable(draggable: boolean): void {
+        this.htmlElement.draggable = draggable;
+    }
+
+    // 要素の寸法とビューポートにおける相対位置を取得する
+    public getBoundingClientRect(): gDOMRect {
+        return this.htmlElement.getBoundingClientRect();
+    }
+
+    // 要素の(height,width) + paddingの値を取得する
+    public getClientWidthHeight(): { width: number; height: number } {
+        return { width: this.htmlElement.clientWidth, height: this.htmlElement.clientHeight };
+    }
+
     // mouseイベントリスナーを設定する
     public setMouseEventListener(mouseEventListener: MouseEventListener | null): void {
         if (this.mouseEventHandler !== null) {
@@ -180,7 +258,24 @@ export class HTMLElement extends Element.Element {
         }
         // イベント登録
         const handler = new ClickEventHander(clickEventListener, this);
-        this.mouseEventHandler = handler;
+        this.clickEventHandler = handler;
+        handler.addTo(this.htmlElement);
+    }
+
+    // dragイベントリスナーを設定する
+    public setDragEventListener(dragEventListener: DragEventListener | null): void {
+        if (this.dragEventHandler !== null) {
+            // 登録済みイベントを解除
+            const handler = this.dragEventHandler;
+            handler.removeFrom(this.htmlElement);
+            this.dragEventHandler = null;
+        }
+        if (dragEventListener === null) {
+            return;
+        }
+        // イベント登録
+        const handler = new DragEventHander(dragEventListener, this);
+        this.dragEventHandler = handler;
         handler.addTo(this.htmlElement);
     }
 }

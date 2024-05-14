@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "sample_compile": "cd './sample'; npm install; npm run build;",
+    "sample_compile": "npm run build; cd './sample'; npm install; npm run build;",
     "prepublishOnly": "npm run build",
     "format": "prettier --write './src'; prettier --write './sample/src';"
   },
