@@ -10,7 +10,7 @@ type gWindow = globalThis.Window;
 
 // loadイベントリスナー
 export interface IframeLoadEventListener {
-    // 入力イベント
+    // loadイベント
     onIframeLoad(element: IframeElement, event: IframeLoadEvent): void;
 }
 

@@ -59,4 +59,14 @@ export class AnchorElement extends Html.HTMLElementVariable<gAElement> {
     public constructor() {
         super(document.createElement('a'));
     }
+
+    // hrefを設定する
+    public setHref(href: string): void {
+        this.htmlVariable.href = href;
+    }
+
+    // downloadを設定する
+    public setDownload(download: string): void {
+        this.htmlVariable.download = download;
+    }
 }
