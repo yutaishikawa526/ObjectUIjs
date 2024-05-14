@@ -10,6 +10,7 @@ export class InputProp extends FormItem.FormItemProp {
     public type: string = 'text';
     public placeholder: string = '';
     public checked: boolean = false;
+    public pattern: string | null = null;
 
     public constructor(
         value: string = '',
@@ -20,11 +21,13 @@ export class InputProp extends FormItem.FormItemProp {
         diable: boolean = false,
         placeholder: string = '',
         checked: boolean = false,
+        pattern: string | null = null,
     ) {
         super(value, name, required, readonly, diable);
         this.type = type;
         this.placeholder = placeholder;
         this.checked = checked;
+        this.pattern = pattern;
     }
 }
 
@@ -56,6 +59,9 @@ export class InputElement extends FormItem.FormItemElementVariable<gInput> {
         input.setAttribute('placeholder', inputProp.placeholder);
         if (inputProp.checked) {
             input.setAttribute('checked', 'true');
+        }
+        if (inputProp.pattern !== null) {
+            input.setAttribute('pattern', inputProp.pattern);
         }
     }
 }

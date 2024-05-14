@@ -532,10 +532,106 @@ class ContentPage3 extends BaseContent implements oujElement.ClickEventListener 
     public onElementClickAUX(element: oujElement.HTMLElement, event: oujElement.MouseEvent): void {}
 }
 
+// サンプルページ4
+class ContentPage4 extends BaseContent implements oujElement.ClickEventListener {
+    // 更新ボタンのID
+    protected static readonly UPDATE_BTN_ID = 'update_btn_id';
+    // 画像の削除
+    protected static readonly DELETE_BTN_ID = 'delete_btn_id';
+    // テーブル
+    protected imgElem: oujElement.ImageElement;
+    // URL入力欄
+    protected urlInput: oujElement.InputElement;
+    // 追加ボタン
+    protected updateButton: oujElement.InputElement;
+    // 削除ボタン
+    protected deleteButton: oujElement.InputElement;
+
+    // コンストラクタ
+    public constructor() {
+        super();
+
+        this.imgElem = new oujElement.ImageElement();
+        this.imgElem.setImageProp(new oujElement.ImageProp('', ''));
+
+        this.urlInput = new oujElement.InputElement(
+            new oujElement.InputProp(
+                '',
+                'url',
+                '',
+                true,
+                false,
+                false,
+                'URLを入力してください。',
+                false,
+                '^https?://.*$',
+            ),
+        );
+        this.updateButton = new oujElement.InputElement(
+            new oujElement.InputProp('更新', 'button', '', true, false, false, '', false),
+        );
+        this.updateButton.setCustomElementId(ContentPage4.UPDATE_BTN_ID);
+        this.updateButton.setClickEventListener(this);
+
+        this.deleteButton = new oujElement.InputElement(
+            new oujElement.InputProp('削除', 'button', '', true, false, false, '', false),
+        );
+        this.deleteButton.setCustomElementId(ContentPage4.DELETE_BTN_ID);
+        this.deleteButton.setClickEventListener(this);
+
+        this.initialize();
+    }
+
+    // 初期化
+    protected initialize(): void {
+        const label1 = new oujElement.LabelElement();
+        const label2 = new oujElement.LabelElement();
+        const label3 = new oujElement.LabelElement();
+
+        label1.addChild(this.urlInput);
+        label2.addChild(this.updateButton);
+        label3.addChild(this.deleteButton);
+
+        this.addChild(label1);
+        this.addChild(label2);
+        this.addChild(label3);
+
+        this.addChild(new oujElement.HRElement());
+
+        this.addChild(this.imgElem);
+        this.imgElem.style.display = 'block';
+        this.imgElem.style.width = '80vw';
+    }
+
+    // クリックイベント
+    public onElementClickSingle(element: oujElement.HTMLElement, event: oujElement.MouseEvent): void {
+        if (element.getCustomElementId() === ContentPage4.UPDATE_BTN_ID) {
+            // 更新ボタンクリック
+            if (!this.urlInput.reportValidity()) {
+                return;
+            }
+
+            const url = this.urlInput.getValue();
+            if (!URL.canParse(url)) {
+                alert('URL parse error');
+                return;
+            }
+            this.imgElem.setImageProp(new oujElement.ImageProp(url, url));
+        } else if (element.getCustomElementId() === ContentPage4.DELETE_BTN_ID) {
+            this.imgElem.setImageProp(new oujElement.ImageProp('', ''));
+        }
+    }
+    // ダブルクリックイベント
+    public onElementClickDBL(element: oujElement.HTMLElement, event: oujElement.MouseEvent): void {}
+    // 第1ボタン以外のクリックイベント
+    public onElementClickAUX(element: oujElement.HTMLElement, event: oujElement.MouseEvent): void {}
+}
+
 const toppage = new Top([
     new HeaderContentPair(new BaseTopHeader('ヘッダー1'), new ContentPage1()),
     new HeaderContentPair(new BaseTopHeader('ヘッダー2'), new ContentPage2()),
     new HeaderContentPair(new BaseTopHeader('ヘッダー3'), new ContentPage3()),
+    new HeaderContentPair(new BaseTopHeader('ヘッダー4'), new ContentPage4()),
 ]);
 
 const wrapper = document.getElementsByTagName('body')[0];
