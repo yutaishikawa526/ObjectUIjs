@@ -3,6 +3,7 @@ dialogのElement
 */
 import * as Html from './html';
 import * as Element from './element';
+import * as CBTask from '../task/callback_task';
 
 type gDialog = globalThis.HTMLDialogElement;
 type gEvent = globalThis.Event;
@@ -59,11 +60,25 @@ export class DialogElement extends Html.HTMLElementVariable<gDialog> {
 
     // 開く処理
     public showModal(): void {
-        this.htmlVariable.showModal();
+        const task = new CBTask.CallbackTask(this.htmlVariable.showModal.bind(this.htmlVariable));
+        task.dispatch(false);
     }
 
     // 閉じる処理
-    public close(retValue: string): void {
-        this.htmlVariable.close(retValue);
+    public close(retValue: string = ''): void {
+        const task = new CBTask.CallbackTask(() => {
+            this.htmlVariable.close(retValue);
+        });
+        task.dispatch(false);
+    }
+
+    // ダイアログが表示中かどうか取得する
+    public isOpen(): boolean {
+        return this.htmlVariable.open;
+    }
+
+    // 閉じるときに指定した値を取得する
+    public getRetValue(): string {
+        return this.htmlVariable.returnValue;
     }
 }
