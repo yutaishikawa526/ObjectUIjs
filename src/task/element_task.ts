@@ -66,27 +66,27 @@ class ElementTaskManager implements TaskListener {
     }
 
     onTaskStart(task: TaskObject): void {
-        if (task instanceof TaskRender) {
+        if (task instanceof RenderObject) {
             // 描画タスク 特になし
-        } else if (task instanceof EventTask) {
+        } else if (task instanceof EventObject) {
             // イベントタスク 特になし
         }
     }
     onTaskCancel(task: TaskObject): void {
-        if (task instanceof TaskRender) {
+        if (task instanceof RenderObject) {
             // 描画タスク
             const elem = task.getElement();
             this.removeElement(elem);
-        } else if (task instanceof EventTask) {
+        } else if (task instanceof EventObject) {
             // イベントタスク 特になし
         }
     }
     onTaskFinish(task: TaskObject): void {
-        if (task instanceof TaskRender) {
+        if (task instanceof RenderObject) {
             // 描画タスク
             const elem = task.getElement();
             this.removeElement(elem);
-        } else if (task instanceof EventTask) {
+        } else if (task instanceof EventObject) {
             // イベントタスク 特になし
         }
     }
@@ -105,11 +105,11 @@ class ElementTaskManager implements TaskListener {
 }
 
 /**
- * 描画タスク
+ * 描画オブジェクト
  */
-export class TaskRender extends Task.TaskObject {
+class RenderObject extends Task.TaskObject {
     // 描画対象のelement
-    protected element: Element;
+    protected readonly element: Element;
 
     // 描画対象のelement要素を取得する
     public getElement(): Element {
@@ -159,15 +159,15 @@ export class TaskRender extends Task.TaskObject {
 }
 
 /**
- * イベントタスク
+ * イベントタスクオブジェクト
  */
-export class EventTask<T extends gEvent, U extends Element> extends Task.TaskObject {
+class EventObject<T extends gEvent, U extends Element> extends Task.TaskObject {
     // コールバック関数
-    protected callback: CallBack<T, U>;
+    protected readonly callback: CallBack<T, U>;
     // 対象のElement
-    protected element: U;
+    protected readonly element: U;
     // 対象のイベント
-    protected event: ElementEvent<T>;
+    protected readonly event: ElementEvent<T>;
 
     // タスクを実行する
     public run(): void {
@@ -180,5 +180,41 @@ export class EventTask<T extends gEvent, U extends Element> extends Task.TaskObj
         this.callback = callback;
         this.element = element;
         this.event = event;
+    }
+}
+
+/**
+ * 描画タスク
+ */
+export class ElementRenderTask {
+    // 描画オブジェクト
+    private readonly taskObject: RenderObject;
+
+    // 描画をディスパッチする
+    public dispatchRender(): void {
+        this.taskObject.dispatch(false);
+    }
+
+    // コンストラクタ
+    public constructor(element: Element) {
+        this.taskObject = new RenderObject(element);
+    }
+}
+
+/**
+ * イベントタスク
+ */
+export class ElementEventTask<T extends gEvent, U extends Element> {
+    // イベントオブジェクト
+    private readonly taskObject: EventObject<T, U>;
+
+    // 要素のイベントをディスパッチする
+    public dispatchEvent(): void {
+        this.taskObject.dispatch(true);
+    }
+
+    // コンストラクタ
+    public constructor(callback: CallBack<T, U>, element: U, event: ElementEvent<T>) {
+        this.taskObject = new EventObject(callback, element, event);
     }
 }

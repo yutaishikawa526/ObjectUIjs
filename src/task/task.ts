@@ -73,7 +73,7 @@ export abstract class TaskObject {
 /**
  * タスクの管理クラス
  */
-export class TaskManager {
+class TaskManager {
     // シングルトンインスタンス
     private static instance: TaskManager | null = null;
     // シングルトンインスタンスを取得する

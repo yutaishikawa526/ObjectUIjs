@@ -1062,7 +1062,7 @@ class SampleDialog
                 return;
             }
 
-            const task = new oujTask.TaskAjax(new oujTask.TaskAjaxProp(new URL(url), 'GET', 'text', null), this);
+            const task = new oujTask.AjaxTask(new oujTask.AjaxTaskProp(new URL(url), 'GET', 'text', null), this);
             task.send();
         } else if (element.getElementId() === this.closeButton.getElementId()) {
             // 閉じるボタン
@@ -1078,12 +1078,12 @@ class SampleDialog
     public onElementClickAUX(element: oujElement.HTMLElement, event: oujElement.MouseEvent): void {}
 
     // 成功時に呼び出される
-    public onAjaxEventSuccess(task: oujTask.TaskAjax): void {
+    public onAjaxEventSuccess(task: oujTask.AjaxTask): void {
         this.showResultField.deleteAllChildren();
         this.showResultField.addChild(new oujElement.TextElement(task.xhr.responseText));
     }
     // 失敗時に呼び出される
-    public onAjaxEventFail(task: oujTask.TaskAjax): void {
+    public onAjaxEventFail(task: oujTask.AjaxTask): void {
         alert('ajax通信に失敗しました。');
     }
 }

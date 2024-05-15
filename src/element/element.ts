@@ -65,8 +65,8 @@ export class ElementEventHander<T extends gEvent, U extends Element, V extends g
 
     // イベントをディスパッチする
     protected appendEvent(event: T, callback: (elem: U, e: ElementEvent<T>) => any): void {
-        const eventTask = new ElementTask.EventTask<T, U>(callback, this.element, new ElementEvent<T>(event));
-        eventTask.dispatch(true);
+        const eventTask = new ElementTask.ElementEventTask<T, U>(callback, this.element, new ElementEvent<T>(event));
+        eventTask.dispatchEvent();
     }
 }
 
@@ -146,8 +146,8 @@ export class Element {
     protected setNeedRender(): void {
         this.needRender = true;
         // 描画処理をディスパッチする
-        const task = new ElementTask.TaskRender(this);
-        task.dispatch();
+        const task = new ElementTask.ElementRenderTask(this);
+        task.dispatchRender();
     }
 
     // 子要素のNodeの再設置が必要と設定する

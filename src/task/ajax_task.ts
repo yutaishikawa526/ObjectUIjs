@@ -10,19 +10,59 @@ type gUrl = globalThis.URL;
 type gFormData = globalThis.FormData;
 
 /**
+ * Ajaxタスクオブジェクト
+ */
+class AjaxObject extends Task.TaskObject {
+    // ajaxタスク
+    protected readonly task: AjaxTask;
+    // ajaxイベントのリスナー
+    protected readonly eventListener: AjaxEventListener;
+
+    // 送信処理
+    public send(formData: gFormData | null): void {
+        this.task.xhr.send(formData);
+
+        this.task.xhr.addEventListener('loadend', this.appendTask.bind(this));
+    }
+
+    // タスクに設定する
+    protected appendTask(event: gProgressEvent): void {
+        this.task.progressEvent = event;
+        this.dispatch(true);
+    }
+
+    // タスクを実行する
+    public run(): void {
+        if (this.task.xhr.status === 200) {
+            this.eventListener.onAjaxEventSuccess(this.task);
+        } else {
+            this.eventListener.onAjaxEventFail(this.task);
+        }
+    }
+
+    // コンストラクタ
+    public constructor(task: AjaxTask, eventListener: AjaxEventListener) {
+        super(null);
+        this.task = task;
+
+        this.eventListener = eventListener;
+    }
+}
+
+/**
  * ajax通信処理のイベントリスナー
  */
 export interface AjaxEventListener {
     // 成功時に呼び出される
-    onAjaxEventSuccess(task: TaskAjax): void;
+    onAjaxEventSuccess(task: AjaxTask): void;
     // 失敗時に呼び出される
-    onAjaxEventFail(task: TaskAjax): void;
+    onAjaxEventFail(task: AjaxTask): void;
 }
 
 /**
  * ajax通信を処理するタスクのプロパティ
  */
-export class TaskAjaxProp {
+export class AjaxTaskProp {
     public url: gUrl;
     public method: string;
     public responseType: gXMLHttpRequestResponseType;
@@ -45,49 +85,37 @@ export class TaskAjaxProp {
 /**
  * ajax通信を処理するタスク
  */
-export class TaskAjax extends Task.TaskObject implements Task.TaskListener {
+export class AjaxTask {
     // ajax通信のオブジェクト
-    public xhr: gXMLHttpRequest;
+    public readonly xhr: gXMLHttpRequest;
+    // プロパティ
+    public readonly ajaxProp: AjaxTaskProp;
     // 通信完了時のイベント
     public progressEvent: gProgressEvent | null = null;
-    // 送信のフォーム情報
-    protected formData: gFormData | null = null;
-    // ajaxイベントのリスナー
-    protected eventListener: AjaxEventListener;
+    // タスクオブジェクト
+    private readonly taskObject: AjaxObject;
 
     // 送信処理
     public send(): void {
-        this.xhr.send(this.formData);
-
-        this.xhr.addEventListener('loadend', (event: gProgressEvent) => {
-            this.progressEvent = event;
-            const taskManager = Task.TaskManager.getInstance();
-            taskManager.dispatch(this, true);
-        });
+        this.xhr.open(this.ajaxProp.method, this.ajaxProp.url);
+        this.xhr.responseType = this.ajaxProp.responseType;
+        this.taskObject.send(this.ajaxProp.formData);
     }
 
-    // タスクを実行する
-    public run(): void {
-        if (this.xhr.status === 200) {
-            this.eventListener.onAjaxEventSuccess(this);
-        } else {
-            this.eventListener.onAjaxEventFail(this);
-        }
+    // カスタムタスクIDを取得する
+    public getCustomTaskId(): string {
+        return this.taskObject.getCustomTaskId();
+    }
+
+    // カスタムタスクIDを設定する
+    public setCustomTaskId(customTaskId: string): void {
+        this.taskObject.setCustomTaskId(customTaskId);
     }
 
     // コンストラクタ
-    public constructor(taskAjaxProp: TaskAjaxProp, eventListener: AjaxEventListener) {
-        super(null);
-        this.taskListener = this;
-
+    public constructor(ajaxProp: AjaxTaskProp, eventListener: AjaxEventListener) {
         this.xhr = new globalThis.XMLHttpRequest();
-        this.xhr.open(taskAjaxProp.method, taskAjaxProp.url);
-        this.xhr.responseType = taskAjaxProp.responseType;
-        this.formData = taskAjaxProp.formData;
-        this.eventListener = eventListener;
+        this.ajaxProp = ajaxProp;
+        this.taskObject = new AjaxObject(this, eventListener);
     }
-
-    public onTaskStart(task: Task.TaskObject): void {}
-    public onTaskCancel(task: Task.TaskObject): void {}
-    public onTaskFinish(task: Task.TaskObject): void {}
 }
