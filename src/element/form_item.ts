@@ -98,7 +98,7 @@ export class FormItemElement extends Html.HTMLElementVariable<UnionFormItem> {
 
     // フォームアイテムのプロパティを設定する
     public setFormItemProp(formItemProp: FormItemProp): void {
-        this.setAttribute('value', formItemProp.value);
+        this.htmlVariable.value = formItemProp.value;
         this.setAttribute('name', formItemProp.name);
         if (formItemProp.required) {
             this.setAttribute('required', 'true');

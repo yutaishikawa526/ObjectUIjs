@@ -37,8 +37,8 @@ const pushExports = function (entryFileName, outputFileName, isDebug) {
 // 以下にコンパイルのエントリーポイントと出力するJSファイル名を指定する
 const entryPoint2OutFile = [
     {
-        entry: './src/sample1.ts',
-        output: 'sample1.js',
+        entry: './src/index.ts',
+        output: 'index.js',
     },
 ];
 
