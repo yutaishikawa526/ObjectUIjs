@@ -18,7 +18,7 @@ export class OptionElement extends Html.HTMLElementVariable<gOption> {
 
     // ラベルと値を設定する
     public setLabelValue(label: string, value: string): void {
-        this.htmlVariable.setAttribute('value', value);
+        this.setAttribute('value', value);
         const text = new Text.TextElement();
         text.setText(label);
         this.addChild(text);
@@ -34,7 +34,7 @@ export class OptGroupElement extends Html.HTMLElementVariable<gOptGroup> {
 
     // ラベルを設定する
     public setLabel(label: string): void {
-        this.htmlVariable.setAttribute('label', label);
+        this.setAttribute('label', label);
     }
 }
 

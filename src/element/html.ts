@@ -218,6 +218,11 @@ export class HTMLElement extends Element.Element {
         this.htmlElement.draggable = draggable;
     }
 
+    // 属性値を設定する
+    public setAttribute(name: string, value: string): void {
+        this.htmlElement.setAttribute(name, value);
+    }
+
     // 要素の寸法とビューポートにおける相対位置を取得する
     public getBoundingClientRect(): gDOMRect {
         return this.htmlElement.getBoundingClientRect();

@@ -43,11 +43,17 @@ export class FileImportTask extends Task.TaskObject implements Task.TaskListener
 
     // 読み込み開始
     public startFileImport(importType: FileImportType, file: gFile): void {
+        this.fileReader.onloadend = this.loadend.bind(this);
         if (importType === FileImportType.text) {
             this.fileReader.readAsText(file);
         } else if (importType === FileImportType.base64Url) {
             this.fileReader.readAsDataURL(file);
         }
+    }
+
+    // 読込完了時処理
+    protected loadend(): void {
+        this.dispatch(true);
     }
 
     // コンストラクタ

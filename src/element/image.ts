@@ -28,6 +28,6 @@ export class ImageElement extends Html.HTMLElementVariable<gImage> {
     // 画像のプロパティを設定する
     public setImageProp(prop: ImageProp): void {
         this.htmlVariable.src = prop.src;
-        this.htmlVariable.setAttribute('alt', prop.alt);
+        this.setAttribute('alt', prop.alt);
     }
 }

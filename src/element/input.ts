@@ -4,6 +4,7 @@ inputのElementの基底クラス
 import * as FormItem from './form_item';
 
 type gInput = globalThis.HTMLInputElement;
+type gFileList = globalThis.FileList;
 
 // inputタグのプロパティ
 export class InputProp extends FormItem.FormItemProp {
@@ -50,18 +51,22 @@ export class InputElement extends FormItem.FormItemElementVariable<gInput> {
         this.formItemVariable.checked = checked;
     }
 
+    // FileListを取得する
+    public getFileList(): gFileList | null {
+        return this.formItemVariable.files;
+    }
+
     // InputPropを適用する
     public setInputProp(inputProp: InputProp) {
         this.setFormItemProp(inputProp);
 
-        const input = this.formItemVariable;
-        input.setAttribute('type', inputProp.type);
-        input.setAttribute('placeholder', inputProp.placeholder);
+        this.setAttribute('type', inputProp.type);
+        this.setAttribute('placeholder', inputProp.placeholder);
         if (inputProp.checked) {
-            input.setAttribute('checked', 'true');
+            this.setAttribute('checked', 'true');
         }
         if (inputProp.pattern !== null) {
-            input.setAttribute('pattern', inputProp.pattern);
+            this.setAttribute('pattern', inputProp.pattern);
         }
     }
 }

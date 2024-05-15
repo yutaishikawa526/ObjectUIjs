@@ -76,17 +76,17 @@ export class FormElement extends Html.HTMLElementVariable<gForm> {
 
     // actionを設定する
     public setAction(action: string) {
-        this.htmlVariable.setAttribute('action', action);
+        this.setAttribute('action', action);
     }
 
     // Methodを指定する
     public setMethod(method: string) {
-        this.htmlVariable.setAttribute('method', method);
+        this.setAttribute('method', method);
     }
 
     // targetを指定する
     public setTarget(target: string) {
-        this.htmlVariable.setAttribute('target', target);
+        this.setAttribute('target', target);
     }
 
     // フォームアイテムの一覧を取得する

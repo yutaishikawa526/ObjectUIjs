@@ -36,7 +36,6 @@ export class TextareaElement extends FormItem.FormItemElementVariable<gTextarea>
     public setTextareaProp(textareaProp: TextareaProp) {
         this.setFormItemProp(textareaProp);
 
-        const textarea = this.formItemVariable;
-        textarea.setAttribute('placeholder', textareaProp.placeholder);
+        this.setAttribute('placeholder', textareaProp.placeholder);
     }
 }
