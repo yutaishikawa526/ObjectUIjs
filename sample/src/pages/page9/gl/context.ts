@@ -9,89 +9,43 @@
  * 大文字小文字判定、正規表現
  * seach: gl\.(?!texParameteri|bindTexture|createTexture|activeTexture|TEXTURE_2D|TEXTURE[0-9]|generateMipmap|flush|drawArrays|clear|texImage2D|POINTS|LINE_STRIP|LINE_LOOP|LINES|TRIANGLE_STRIP|TRIANGLE_FAN|TRIANGLES|LINEAR|NEAREST|NEAREST_MIPMAP_NEAREST|LINEAR_MIPMAP_NEAREST|NEAREST_MIPMAP_LINEAR|LINEAR_MIPMAP_LINEAR|REPEAT|CLAMP_TO_EDGE|MIRRORED_REPEAT|COLOR_BUFFER_BIT|COLOR_ATTACHMENT0|createFramebuffer|framebufferTexture2D|FRAMEBUFFER|bindFramebuffer|readPixels|RGBA|UNSIGNED_BYTE|canvas|TEXTURE_WRAP_S|TEXTURE_WRAP_T|TEXTURE_MIN_FILTER|TEXTURE_MAG_FILTER|getUniformLocation|uniformMatrix4fv|useProgram|createShader|VERTEX_SHADER|FRAGMENT_SHADER|shaderSource|compileShader|COMPILE_STATUS|getShaderInfoLog|getShaderParameter|createProgram|attachShader|linkProgram|getProgramParameter|getProgramInfoLog|LINK_STATUS|MAX_COMBINED_TEXTURE_IMAGE_UNITS|uniform1i|BLEND|SRC_ALPHA|ONE_MINUS_SRC_ALPHA|CULL_FACE|STATIC_DRAW|ARRAY_BUFFER|FLOAT|ONE|ZERO|getAttribLocation|createBuffer|bindBuffer|DYNAMIC_DRAW|STREAM_DRAW|bufferData|enableVertexAttribArray|vertexAttribPointer|BYTE|SHORT|UNSIGNED_SHORT)
  */
+import { DrawType, TextureMinMagFilter, TextureWrapFilter, BufferStoreType, AttributeType } from './type';
 import { Texture } from './texture';
-import { Framebuffer } from './framebufffer';
+import { Framebuffer } from './framebuffer';
+import { ArrayBuffer } from './array_buffer';
+import { GLObject } from './gl_object';
 
-// 描画のタイプ
-export enum DrawType {
-    POINTS,
-    LINE_STRIP,
-    LINE_LOOP,
-    LINES,
-    TRIANGLE_STRIP,
-    TRIANGLE_FAN,
-    TRIANGLES,
-}
+// bind情報
+type BindInfo = { bindIndex: number; bindNumber: number };
 
-// MinMagフィルターのタイプ
-export enum TextureMinMagFilter {
-    LINEAR,
-    NEAREST,
-    NEAREST_MIPMAP_NEAREST,
-    LINEAR_MIPMAP_NEAREST,
-    NEAREST_MIPMAP_LINEAR,
-    LINEAR_MIPMAP_LINEAR,
-}
-
-// wrapフィルターのタイプ
-export enum TextureWrapFilter {
-    REPEAT,
-    CLAMP_TO_EDGE,
-    MIRRORED_REPEAT,
-}
-
-// bufferオブジェクトのストアタイプ
-export enum BufferStoreType {
-    STATIC_DRAW,
-    DYNAMIC_DRAW,
-    STREAM_DRAW,
-}
-
-// 頂点属性のタイプ
-export enum AttributeType {
-    BYTE,
-    SHORT,
-    UNSIGNED_BYTE,
-    UNSIGNED_SHORT,
-    FLOAT,
-}
-
-// テクスチャIDとbind番号の紐づけ
-class TextureId2BindNumber {
-    public textureId: number;
-    public bindNumber: number;
-    public constructor(textureId: number, bindNumber: number) {
-        this.textureId = textureId;
-        this.bindNumber = bindNumber;
-    }
-}
+// テクスチャIDとbind情報の紐づけ
+type TexBindInfo = { texId: number; bindInfo: BindInfo };
 
 // webglのコンテキストのラッパークラス
 export class GLContext {
     // コンテキストの生データ
     private readonly glContext: WebGLRenderingContext;
     // 使用中テクスチャbind番号とテクスチャIDの組合せ
-    private usingTextureBindNumber: Array<TextureId2BindNumber> = [];
+    private usingTexBindInfoList: Array<TexBindInfo> = [];
     // 最大のテクスチャのbindできる数
     public readonly maxTextureCount: number;
-    // 特殊なテクスチャのbind番号とインデックス
-    public readonly specialTexBindIndex: { bindIndex: number; bindNumber: number };
     // framebufferのスタック
     private framebufferStack: Array<Framebuffer> = [];
+    // 有効なGLObjectのID一覧
+    private objectIdList: Array<number> = [];
 
     // コンストラクタ
     public constructor(gl: WebGLRenderingContext) {
         this.glContext = gl;
-        this.maxTextureCount = this.getTextureBindIndex().length;
-        this.specialTexBindIndex = { bindIndex: this.glContext.TEXTURE31, bindNumber: 31 };
+        this.maxTextureCount = this.getBindInfoList().length;
     }
 
     // ----------- 内部で使用 -------------
 
-    // テクスチャとしてbindできるインデックスの一覧
-    private getTextureBindIndex(): Array<number> {
+    // テクスチャとしてbindできるBindInfoの一覧
+    private getBindInfoList(): Array<BindInfo> {
         const gl = this.glContext;
-        const list = [
+        let list: Array<number> = [
             gl.TEXTURE0,
             gl.TEXTURE1,
             gl.TEXTURE2,
@@ -123,33 +77,63 @@ export class GLContext {
             gl.TEXTURE28,
             gl.TEXTURE29,
             gl.TEXTURE30,
+            gl.TEXTURE31,
         ];
-
-        return list.slice(0, Number(gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS)) - 1);
+        list = list.slice(0, Number(gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS)) - 1);
+        return list.map((bindIndex: number, bindNumber: number) => {
+            return { bindIndex: bindIndex, bindNumber: bindNumber };
+        });
     }
 
     // テクスチャがbind済みかどうか
-    private isTextureBind(texture: Texture): TextureId2BindNumber | null {
-        const t2b = this.usingTextureBindNumber.find((t2b: TextureId2BindNumber) => {
-            return texture.textureId === t2b.textureId;
+    private isTextureBind(texture: Texture): TexBindInfo | null {
+        const t2b = this.usingTexBindInfoList.find((t2b: TexBindInfo) => {
+            return texture.getTextureId() === t2b.texId;
         });
         return t2b === undefined ? null : t2b;
     }
 
     // 新しいテクスチャbind番号とbindインデックスを取得する
-    private getNewTextureBindNumberAndIndex(): { bindNumber: number; bindIndex: number } {
-        const usingBindNList: Array<number> = this.usingTextureBindNumber.map((t2b: TextureId2BindNumber) => {
-            return t2b.bindNumber;
+    private getNewTexBindInfo(): BindInfo {
+        const bindInfoList = this.getBindInfoList();
+        const usingBindNumberList: Array<number> = this.usingTexBindInfoList.map((t2b: TexBindInfo) => {
+            return t2b.bindInfo.bindNumber;
         });
-        const textureBindIndex = this.getTextureBindIndex();
-        let newBindNumber = textureBindIndex.findIndex((bindIndex: number, bindNumber: number) => {
-            return usingBindNList.indexOf(bindNumber) === -1;
+        const binfo = bindInfoList.find((bindInfo: BindInfo) => {
+            return usingBindNumberList.indexOf(bindInfo.bindNumber) === -1;
         });
-        if (newBindNumber === undefined) {
+        if (binfo === undefined) {
             throw new Error('textureの上限に達しました。');
         }
-        const newBindIndex = textureBindIndex[newBindNumber];
-        return { bindNumber: newBindNumber, bindIndex: newBindIndex };
+        return binfo;
+    }
+
+    // GLObjectがこのコンテキストで有効かどうか判定する
+    // 無効なときは例外を発生する
+    private checkGLObject(glObj: GLObject): void {
+        const index = this.objectIdList.find((id: number) => {
+            return glObj.objectId === id;
+        });
+        if (index === undefined) {
+            throw new Error('GLObjectがこのコンテキストでは有効ではありません。');
+        }
+    }
+
+    // GLObjectを登録する
+    private registerGLObject(glObj: GLObject): void {
+        const index = this.objectIdList.find((id: number) => {
+            return glObj.objectId === id;
+        });
+        if (index === undefined) {
+            this.objectIdList.push(glObj.objectId);
+        }
+    }
+
+    // GLObjectの登録を解除する
+    private unregisterGLObject(glObj: GLObject): void {
+        this.objectIdList = this.objectIdList.filter((id: number) => {
+            return glObj.objectId !== id;
+        });
     }
 
     // ----------- テクスチャ関連の処理 -------------
@@ -160,7 +144,9 @@ export class GLContext {
         if (texture === null) {
             throw new Error('テクスチャの作成に失敗しました。');
         }
-        return new Texture(texture);
+        const texObj = new Texture(this, texture);
+        this.registerGLObject(texObj);
+        return texObj;
     }
 
     /**
@@ -169,30 +155,29 @@ export class GLContext {
      * @returns bindしたテクスチャの番号
      */
     public bindTexture2D(texture: Texture): number {
-        if (!texture.getIsValid()) {
-            throw new Error('テクスチャが無効化されています。');
-        }
+        this.checkGLObject(texture);
         const gl = this.glContext;
 
         const t2b = this.isTextureBind(texture);
         if (t2b === null) {
             // 未登録
-            const { bindNumber: bindNumber, bindIndex: bindIndex } = this.getNewTextureBindNumberAndIndex();
+            const { bindNumber: bindNumber, bindIndex: bindIndex } = this.getNewTexBindInfo();
             gl.activeTexture(bindIndex);
             gl.bindTexture(gl.TEXTURE_2D, texture.glTexture);
-            this.usingTextureBindNumber.push(new TextureId2BindNumber(texture.textureId, bindNumber));
+            this.usingTexBindInfoList.push({
+                texId: texture.getTextureId(),
+                bindInfo: { bindIndex: bindIndex, bindNumber: bindNumber },
+            });
             return bindNumber;
         } else {
             // 登録済み
-            return t2b.bindNumber;
+            return t2b.bindInfo.bindNumber;
         }
     }
 
     // テクスチャをunbindする
     public unbindTexture2D(texture: Texture): void {
-        if (!texture.getIsValid()) {
-            throw new Error('テクスチャが無効化されています。');
-        }
+        this.checkGLObject(texture);
         const gl = this.glContext;
 
         const t2b = this.isTextureBind(texture);
@@ -201,20 +186,18 @@ export class GLContext {
             return;
         }
 
-        const bindNumber = t2b.bindNumber;
-        const bindIndex = this.getTextureBindIndex()[bindNumber];
+        const bindNumber = t2b.bindInfo.bindNumber;
+        const bindIndex = t2b.bindInfo.bindIndex;
         gl.activeTexture(bindIndex);
         gl.bindTexture(gl.TEXTURE_2D, null);
-        this.usingTextureBindNumber = this.usingTextureBindNumber.filter((t2b: TextureId2BindNumber) => {
-            return t2b.bindNumber !== bindNumber;
+        this.usingTexBindInfoList = this.usingTexBindInfoList.filter((t2b: TexBindInfo) => {
+            return t2b.bindInfo.bindNumber !== bindNumber;
         });
     }
 
     // テクスチャにMipmapを作成する
     public generateMipmap2D(texture: Texture): void {
-        if (!texture.getIsValid()) {
-            throw new Error('テクスチャが無効化されています。');
-        }
+        this.checkGLObject(texture);
         const gl = this.glContext;
 
         const texUnbinded = this.isTextureBind(texture) !== null;
@@ -227,13 +210,11 @@ export class GLContext {
 
     // テクスチャを削除する
     public deleteTexture(texture: Texture): void {
-        if (!texture.getIsValid()) {
-            return; // 削除済み
-        }
+        this.checkGLObject(texture);
 
         this.unbindTexture2D(texture);
         this.glContext.deleteTexture(texture.glTexture);
-        texture.setInvalid();
+        this.unregisterGLObject(texture);
     }
 
     // テクスチャの拡大縮小フィルターを設定する
@@ -242,9 +223,7 @@ export class GLContext {
         minFilter: TextureMinMagFilter,
         magFilter: TextureMinMagFilter,
     ): void {
-        if (!texture.getIsValid()) {
-            throw new Error('テクスチャが無効化されています。');
-        }
+        this.checkGLObject(texture);
         const gl = this.glContext;
 
         let minParam: number = gl.NEAREST_MIPMAP_LINEAR;
@@ -306,9 +285,7 @@ export class GLContext {
 
     // テクスチャのs座標t座標のラッピング処理を設定する
     public setTextureWrapFilter2D(texture: Texture, sFilter: TextureWrapFilter, tFilter: TextureWrapFilter): void {
-        if (!texture.getIsValid()) {
-            throw new Error('テクスチャが無効化されています。');
-        }
+        this.checkGLObject(texture);
         const gl = this.glContext;
 
         let sParam: number = gl.REPEAT;
@@ -364,9 +341,7 @@ export class GLContext {
         border: number,
         pixels: ArrayBufferView | null,
     ): void {
-        if (!texture.getIsValid()) {
-            throw new Error('テクスチャが無効化されています。');
-        }
+        this.checkGLObject(texture);
         const gl = this.glContext;
 
         const texUnbinded = this.isTextureBind(texture) !== null;
@@ -389,23 +364,36 @@ export class GLContext {
         if (framebuffer === null) {
             throw new Error('framebufferの作成に失敗しました。');
         }
+        const fbObj = new Framebuffer(this, framebuffer);
+        this.registerGLObject(fbObj);
 
-        return new Framebuffer(framebuffer);
+        return fbObj;
     }
 
     // 現在のframebufferにテクスチャを紐づける
     public bindTexture2Framebuffer(texture: Texture): void {
-        if (!texture.getIsValid()) {
-            throw new Error('テクスチャが無効化されています。');
-        }
+        this.checkGLObject(texture);
         const gl = this.glContext;
 
         this.bindTexture2D(texture);
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
     }
 
+    // framebufferとテクスチャを指定してframebufferにテクスチャを紐付ける
+    public bindTexture2DesignatedFramebuffer(framebuffer: Framebuffer, texture: Texture): void {
+        const fbLast = this.checkIsLastFramebuffer(framebuffer); // 現在の最新かどうか
+        if (!fbLast) {
+            this.pushFramebuffer(framebuffer);
+        }
+        this.bindTexture2Framebuffer(texture);
+        if (!fbLast) {
+            this.popFramebuffer(); // 最新ではないときはもとに戻す
+        }
+    }
+
     // framebufferを最新に設定する
     public pushFramebuffer(framebuffer: Framebuffer): void {
+        this.checkGLObject(framebuffer);
         const gl = this.glContext;
 
         this.framebufferStack.push(framebuffer);
@@ -418,17 +406,23 @@ export class GLContext {
 
         this.framebufferStack.pop();
         const len = this.framebufferStack.length;
-        const last = len === 0 ? null : this.framebufferStack[len - 1].framebuffer;
-        gl.bindFramebuffer(gl.FRAMEBUFFER, last);
+        const last = len === 0 ? null : this.framebufferStack[len - 1];
+        if (last === null) {
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        } else {
+            this.checkGLObject(last);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, last.framebuffer);
+        }
     }
 
     // 現在の最新のframebufferかどうか判定する
     public checkIsLastFramebuffer(framebuffer: Framebuffer): boolean {
+        this.checkGLObject(framebuffer);
         const len = this.framebufferStack.length;
         if (len === 0) {
             return false;
         } else {
-            return framebuffer.framebufferId === this.framebufferStack[len - 1].framebufferId;
+            return framebuffer.getFBId() === this.framebufferStack[len - 1].getFBId();
         }
     }
 
@@ -536,18 +530,23 @@ export class GLContext {
     // ----------- shader変数関連の処理 -----------
 
     // 配列形式のbufferオブジェクトを作成
-    public createArrayBuffer(): WebGLBuffer {
+    public createArrayBuffer(): ArrayBuffer {
         const buffer = this.glContext.createBuffer();
         if (buffer === null) {
             throw new Error('bufferオブジェクトの作成に失敗しました。');
         }
-        return buffer;
+        const bufferObj = new ArrayBuffer(this, buffer);
+        this.registerGLObject(bufferObj);
+
+        return bufferObj;
     }
 
     // 配列形式のbufferオブジェクトをbindする
-    public bindArrayBuffer(buffer: WebGLBuffer): void {
+    public bindArrayBuffer(buffer: ArrayBuffer): void {
+        this.checkGLObject(buffer);
         const gl = this.glContext;
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.buffer);
     }
 
     // bufferオブジェクトのストアタイプを指定する
