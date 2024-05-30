@@ -10,6 +10,7 @@ import { Page5 } from './pages/page5';
 import { Page6 } from './pages/page6';
 import { Page7 } from './pages/page7';
 import { Page8 } from './pages/page8';
+import { Page9 } from './pages/page9/page9';
 
 console.log('start');
 
@@ -31,6 +32,7 @@ const toppage = new Top([
     new HeaderContentPair(new BaseTopHeader('ヘッダー6'), new Page6()),
     new HeaderContentPair(new BaseTopHeader('ヘッダー7'), new Page7()),
     new HeaderContentPair(new BaseTopHeader('ヘッダー8'), new Page8()),
+    new HeaderContentPair(new BaseTopHeader('ヘッダー9'), new Page9()),
 ]);
 
 toppage.addToNode(wrapper);
