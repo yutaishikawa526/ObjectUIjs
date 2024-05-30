@@ -3,17 +3,13 @@
  *
  * テクスチャのbindインデックスとbind番号について、bindインデックスはWebGLRenderingContext.TEXTURE0等が対応し、
  * bind番号はTEXTURE0なら0、TEXTURE5なら5が対応する
- *
- * 未実装検索↓
- * files to include: sample/src/pages/page9/*
- * 大文字小文字判定、正規表現
- * seach: gl\.(?!texParameteri|bindTexture|createTexture|activeTexture|TEXTURE_2D|TEXTURE[0-9]|generateMipmap|flush|drawArrays|clear|texImage2D|POINTS|LINE_STRIP|LINE_LOOP|LINES|TRIANGLE_STRIP|TRIANGLE_FAN|TRIANGLES|LINEAR|NEAREST|NEAREST_MIPMAP_NEAREST|LINEAR_MIPMAP_NEAREST|NEAREST_MIPMAP_LINEAR|LINEAR_MIPMAP_LINEAR|REPEAT|CLAMP_TO_EDGE|MIRRORED_REPEAT|COLOR_BUFFER_BIT|COLOR_ATTACHMENT0|createFramebuffer|framebufferTexture2D|FRAMEBUFFER|bindFramebuffer|readPixels|RGBA|UNSIGNED_BYTE|canvas|TEXTURE_WRAP_S|TEXTURE_WRAP_T|TEXTURE_MIN_FILTER|TEXTURE_MAG_FILTER|getUniformLocation|uniformMatrix4fv|useProgram|createShader|VERTEX_SHADER|FRAGMENT_SHADER|shaderSource|compileShader|COMPILE_STATUS|getShaderInfoLog|getShaderParameter|createProgram|attachShader|linkProgram|getProgramParameter|getProgramInfoLog|LINK_STATUS|MAX_COMBINED_TEXTURE_IMAGE_UNITS|uniform1i|BLEND|SRC_ALPHA|ONE_MINUS_SRC_ALPHA|CULL_FACE|STATIC_DRAW|ARRAY_BUFFER|FLOAT|ONE|ZERO|getAttribLocation|createBuffer|bindBuffer|DYNAMIC_DRAW|STREAM_DRAW|bufferData|enableVertexAttribArray|vertexAttribPointer|BYTE|SHORT|UNSIGNED_SHORT)
  */
-import { DrawType, TextureMinMagFilter, TextureWrapFilter, BufferStoreType, AttributeType } from './type';
+import { DrawType, TextureMinMagFilter, TextureWrapFilter, BufferStoreType, AttributeType, BlendType } from './type';
 import { Texture } from './texture';
 import { Framebuffer } from './framebuffer';
 import { ArrayBuffer } from './array_buffer';
 import { GLObject } from './gl_object';
+import { AttributeScope } from './attribute_scope';
 
 // bind情報
 type BindInfo = { bindIndex: number; bindNumber: number };
@@ -33,11 +29,13 @@ export class GLContext {
     private framebufferStack: Array<Framebuffer> = [];
     // 有効なGLObjectのID一覧
     private objectIdList: Array<number> = [];
+    // 属性のスコープのスタック
+    private attrScopeStack: Array<AttributeScope> = [];
 
     // コンストラクタ
     public constructor(gl: WebGLRenderingContext) {
         this.glContext = gl;
-        this.maxTextureCount = this.getBindInfoList().length;
+        this.maxTextureCount = Number(gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS));
     }
 
     // ----------- 内部で使用 -------------
@@ -79,7 +77,7 @@ export class GLContext {
             gl.TEXTURE30,
             gl.TEXTURE31,
         ];
-        list = list.slice(0, Number(gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS)) - 1);
+        list = list.slice(0, this.maxTextureCount - 1);
         return list.map((bindIndex: number, bindNumber: number) => {
             return { bindIndex: bindIndex, bindNumber: bindNumber };
         });
@@ -134,6 +132,105 @@ export class GLContext {
         this.objectIdList = this.objectIdList.filter((id: number) => {
             return glObj.objectId !== id;
         });
+    }
+
+    // デフォルトの属性スコープを取得する
+    private getDefaultAttrScope(): AttributeScope {
+        const attr = new AttributeScope();
+        attr.blend = false;
+        attr.culling = false;
+        attr.depth = false;
+        attr.blendFunc = { src: BlendType.ONE, dest: BlendType.ZERO };
+        attr.frontFaceCCW = true;
+        const cvv = this.getCanvasSize();
+        attr.viewport = { x: 0, y: 0, width: cvv.width, height: cvv.height };
+        return attr;
+    }
+
+    // 属性スコープを指定して適用する
+    private appendAttrScope(attr: AttributeScope): void {
+        const gl = this.glContext;
+
+        if (attr.blend === true) {
+            gl.enable(gl.BLEND);
+        } else {
+            gl.disable(gl.BLEND);
+        }
+        if (attr.culling === true) {
+            gl.enable(gl.CULL_FACE);
+        } else {
+            gl.disable(gl.CULL_FACE);
+        }
+        if (attr.depth === true) {
+            gl.enable(gl.DEPTH_TEST);
+        } else {
+            gl.disable(gl.DEPTH_TEST);
+        }
+        if (attr.blendFunc === null) {
+            gl.blendFunc(gl.ONE, gl.ZERO);
+        } else {
+            const type2func = function (type: BlendType): number {
+                let func: number = gl.ZERO;
+                switch (type) {
+                    case BlendType.ZERO:
+                        func = gl.ZERO;
+                        break;
+                    case BlendType.ONE:
+                        func = gl.ONE;
+                        break;
+                    case BlendType.SRC_COLOR:
+                        func = gl.SRC_COLOR;
+                        break;
+                    case BlendType.ONE_MINUS_SRC_COLOR:
+                        func = gl.ONE_MINUS_SRC_COLOR;
+                        break;
+                    case BlendType.DST_COLOR:
+                        func = gl.DST_COLOR;
+                        break;
+                    case BlendType.ONE_MINUS_DST_COLOR:
+                        func = gl.ONE_MINUS_DST_COLOR;
+                        break;
+                    case BlendType.SRC_ALPHA:
+                        func = gl.SRC_ALPHA;
+                        break;
+                    case BlendType.ONE_MINUS_SRC_ALPHA:
+                        func = gl.ONE_MINUS_SRC_ALPHA;
+                        break;
+                    case BlendType.DST_ALPHA:
+                        func = gl.DST_ALPHA;
+                        break;
+                    case BlendType.ONE_MINUS_DST_ALPHA:
+                        func = gl.ONE_MINUS_DST_ALPHA;
+                        break;
+                    case BlendType.CONSTANT_COLOR:
+                        func = gl.CONSTANT_COLOR;
+                        break;
+                    case BlendType.ONE_MINUS_CONSTANT_COLOR:
+                        func = gl.ONE_MINUS_CONSTANT_COLOR;
+                        break;
+                    case BlendType.CONSTANT_ALPHA:
+                        func = gl.CONSTANT_ALPHA;
+                        break;
+                    case BlendType.ONE_MINUS_CONSTANT_ALPHA:
+                        func = gl.ONE_MINUS_CONSTANT_ALPHA;
+                        break;
+                    case BlendType.SRC_ALPHA_SATURATE:
+                        func = gl.SRC_ALPHA_SATURATE;
+                        break;
+                    default:
+                        break;
+                }
+                return func;
+            };
+            gl.blendFunc(type2func(attr.blendFunc.src), type2func(attr.blendFunc.dest));
+        }
+        if (attr.viewport === null) {
+            const cvv = this.getCanvasSize();
+            gl.viewport(0, 0, cvv.width, cvv.height);
+        } else {
+            const vp = attr.viewport;
+            gl.viewport(vp.x, vp.y, vp.width, vp.height);
+        }
     }
 
     // ----------- テクスチャ関連の処理 -------------
@@ -663,5 +760,27 @@ export class GLContext {
     public getCanvasSize(): { width: number; height: number } {
         const cv = this.glContext.canvas;
         return { width: cv.width, height: cv.height };
+    }
+
+    // 属性スコープを設定する
+    public pushAttrScope(attr: AttributeScope): void {
+        const last =
+            this.attrScopeStack.length === 0
+                ? this.getDefaultAttrScope()
+                : this.attrScopeStack[this.attrScopeStack.length - 1];
+        const attrScope = attr.clone();
+        attrScope.copy(last);
+        this.attrScopeStack.push(attrScope);
+        this.appendAttrScope(attrScope);
+    }
+
+    // 最新の属性スコープを取り除く
+    public popAttrScope(): void {
+        const last = this.attrScopeStack.pop();
+        if (last === undefined) {
+            this.appendAttrScope(this.getDefaultAttrScope());
+        } else {
+            this.appendAttrScope(last);
+        }
     }
 }
