@@ -3,7 +3,6 @@
  */
 import { element as oujElement, util as oujUtil, task as oujTask } from 'objectuijs';
 import { Canvas } from './canvas';
-import { isJSDocThisTag } from 'typescript';
 
 // キャンバス画面
 export class CanvasView
