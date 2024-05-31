@@ -4,6 +4,7 @@
 import { Shader } from '../gl/shader';
 import { AttributeScope } from '../gl/attribute_scope';
 import { DrawType, BlendType } from '../gl/type';
+import { ContextScope } from '../gl/context_scope';
 
 // 線を描画
 export class DrawLineShader extends Shader<{
@@ -77,12 +78,6 @@ export class DrawLineShader extends Shader<{
         } else if (edgeDivision < 0) {
             throw new Error('端の分割は0以上を指定する必要があります。');
         }
-
-        const attrScope = new AttributeScope();
-        attrScope.blend = true;
-        attrScope.culling = false;
-        attrScope.blendFunc = { src: BlendType.SRC_ALPHA, dest: BlendType.ONE_MINUS_SRC_ALPHA };
-        context.pushAttrScope(attrScope);
 
         const vertexStride = 2;
         const colorStride = 4;
@@ -234,9 +229,6 @@ export class DrawLineShader extends Shader<{
         //}
         //console.log('----------------------------');
 
-        this.appendVBO('a_position', new Float32Array(modifiedVPos), vertexStride);
-        this.appendVBO('a_color', new Float32Array(modifiedVCol), colorStride);
-
         // prettier-ignore
         const projMatrix = [// 座標変換行列
             2.0 / width, 0.0, 0.0, 0.0,
@@ -245,10 +237,24 @@ export class DrawLineShader extends Shader<{
             -1.0, 1.0, 0.0, 1.0,
         ];
 
-        this.appendUniform('u_matrix', projMatrix);
+        const attrScope = new AttributeScope();
+        attrScope.blend = true;
+        attrScope.culling = false;
+        attrScope.blendFunc = { src: BlendType.SRC_ALPHA, dest: BlendType.ONE_MINUS_SRC_ALPHA };
 
-        context.drawArrays(DrawType.TRIANGLE_STRIP, 0, modifiedVPos.length / vertexStride);
+        new ContextScope(
+            () => {
+                this.appendVBO('a_position', new Float32Array(modifiedVPos), vertexStride);
+                this.appendVBO('a_color', new Float32Array(modifiedVCol), colorStride);
 
-        context.popAttrScope();
+                this.appendUniform('u_matrix', projMatrix);
+
+                context.drawArrays(DrawType.TRIANGLE_STRIP, 0, modifiedVPos.length / vertexStride);
+            },
+            context,
+            attrScope,
+            null,
+            null,
+        );
     }
 }

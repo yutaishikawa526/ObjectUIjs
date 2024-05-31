@@ -134,17 +134,21 @@ export class GLContext {
         });
     }
 
-    // デフォルトの属性スコープを取得する
-    private getDefaultAttrScope(): AttributeScope {
-        const attr = new AttributeScope();
-        attr.blend = false;
-        attr.culling = false;
-        attr.depth = false;
-        attr.blendFunc = { src: BlendType.ONE, dest: BlendType.ZERO };
-        attr.frontFaceCCW = true;
-        const cvv = this.getCanvasSize();
-        attr.viewport = { x: 0, y: 0, width: cvv.width, height: cvv.height };
-        return attr;
+    // 最新の属性スコープを取得する
+    private getLastAttrScope(): AttributeScope {
+        if (this.attrScopeStack.length === 0) {
+            const attr = new AttributeScope();
+            attr.blend = false;
+            attr.culling = false;
+            attr.depth = false;
+            attr.blendFunc = { src: BlendType.ONE, dest: BlendType.ZERO };
+            attr.frontFaceCCW = true;
+            const cvv = this.getCanvasSize();
+            attr.viewport = { x: 0, y: 0, width: cvv.width, height: cvv.height };
+            return attr;
+        } else {
+            return this.attrScopeStack[this.attrScopeStack.length - 1];
+        }
     }
 
     // 属性スコープを指定して適用する
@@ -268,6 +272,7 @@ export class GLContext {
             return bindNumber;
         } else {
             // 登録済み
+            gl.activeTexture(t2b.bindInfo.bindIndex);
             return t2b.bindInfo.bindNumber;
         }
     }
@@ -297,7 +302,7 @@ export class GLContext {
         this.checkGLObject(texture);
         const gl = this.glContext;
 
-        const texUnbinded = this.isTextureBind(texture) !== null;
+        const texUnbinded = this.isTextureBind(texture) === null;
         this.bindTexture2D(texture);
         gl.generateMipmap(gl.TEXTURE_2D);
         if (texUnbinded) {
@@ -371,7 +376,7 @@ export class GLContext {
                 break;
         }
 
-        const texUnbinded = this.isTextureBind(texture) !== null;
+        const texUnbinded = this.isTextureBind(texture) === null;
         this.bindTexture2D(texture);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, minParam);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, magParam);
@@ -414,7 +419,7 @@ export class GLContext {
                 break;
         }
 
-        const texUnbinded = this.isTextureBind(texture) !== null;
+        const texUnbinded = this.isTextureBind(texture) === null;
         this.bindTexture2D(texture);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, sParam);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, tParam);
@@ -441,7 +446,7 @@ export class GLContext {
         this.checkGLObject(texture);
         const gl = this.glContext;
 
-        const texUnbinded = this.isTextureBind(texture) !== null;
+        const texUnbinded = this.isTextureBind(texture) === null;
         this.bindTexture2D(texture);
 
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, border, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
@@ -771,10 +776,7 @@ export class GLContext {
 
     // 属性スコープを設定する
     public pushAttrScope(attr: AttributeScope): void {
-        const last =
-            this.attrScopeStack.length === 0
-                ? this.getDefaultAttrScope()
-                : this.attrScopeStack[this.attrScopeStack.length - 1];
+        const last = this.getLastAttrScope();
         const attrScope = attr.clone();
         attrScope.copy(last);
         this.attrScopeStack.push(attrScope);
@@ -783,11 +785,8 @@ export class GLContext {
 
     // 最新の属性スコープを取り除く
     public popAttrScope(): void {
-        const last = this.attrScopeStack.pop();
-        if (last === undefined) {
-            this.appendAttrScope(this.getDefaultAttrScope());
-        } else {
-            this.appendAttrScope(last);
-        }
+        this.attrScopeStack.pop();
+        const last = this.getLastAttrScope();
+        this.appendAttrScope(last);
     }
 }

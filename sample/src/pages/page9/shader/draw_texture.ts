@@ -5,6 +5,7 @@ import { Shader } from '../gl/shader';
 import { AttributeScope } from '../gl/attribute_scope';
 import { DrawType, BlendType, TextureMinMagFilter, TextureWrapFilter } from '../gl/type';
 import { Texture } from '../gl/texture';
+import { ContextScope } from '../gl/context_scope';
 
 // テクスチャをそのまま描画
 export class DrawTextureShader extends Shader<Texture> {
@@ -50,9 +51,6 @@ export class DrawTextureShader extends Shader<Texture> {
         }
         const context = this.context;
 
-        const attrScope = this.createAttrScope();
-        context.pushAttrScope(attrScope);
-
         // prettier-ignore
         const vertexPos = [// 頂点座標配列
             -1.0, -1.0, 1.0,
@@ -72,21 +70,31 @@ export class DrawTextureShader extends Shader<Texture> {
         const posStride = 3;
         const textureStride = 2;
 
-        this.appendVBO('a_position', new Float32Array(vertexPos), posStride);
-        this.appendVBO('a_textureCoord', new Float32Array(textureCoord), textureStride);
+        new ContextScope(
+            () => {
+                this.appendVBO('a_position', new Float32Array(vertexPos), posStride);
+                this.appendVBO('a_textureCoord', new Float32Array(textureCoord), textureStride);
 
-        const texBindNumber = context.bindTexture2D(texture);
-        const textureUniIndex = context.getUniformLocation(this.program, 'u_texture');
-        context.generateMipmap2D(texture);
-        context.uniform1i(textureUniIndex, texBindNumber);
-        context.setTextureMinMagFilter2D(texture, TextureMinMagFilter.NEAREST, TextureMinMagFilter.NEAREST);
-        context.setTextureWrapFilter2D(texture, TextureWrapFilter.CLAMP_TO_EDGE, TextureWrapFilter.CLAMP_TO_EDGE);
+                this.bindTexture2DAndAttribute(
+                    'u_texture',
+                    texture,
+                    TextureMinMagFilter.NEAREST,
+                    TextureMinMagFilter.NEAREST,
+                    TextureWrapFilter.CLAMP_TO_EDGE,
+                    TextureWrapFilter.CLAMP_TO_EDGE,
+                    true,
+                );
 
-        // 描画
-        context.drawArrays(DrawType.TRIANGLE_STRIP, 0, 4);
+                // 描画
+                context.drawArrays(DrawType.TRIANGLE_STRIP, 0, 4);
 
-        context.unbindTexture2D(texture);
-        context.popAttrScope();
+                context.unbindTexture2D(texture);
+            },
+            context,
+            this.createAttrScope(),
+            null,
+            null,
+        );
     }
 
     // attrスコープの作成

@@ -6,6 +6,7 @@ import { Shader } from '../gl/shader';
 import { AttributeScope } from '../gl/attribute_scope';
 import { DrawType, BlendType, TextureMinMagFilter, TextureWrapFilter } from '../gl/type';
 import { Texture } from '../gl/texture';
+import { ContextScope } from '../gl/context_scope';
 
 // テクスチャをそのまま描画
 export class DrawMixTextureShader extends Shader<{ first: Texture; second: Texture }> {
@@ -63,7 +64,6 @@ export class DrawMixTextureShader extends Shader<{ first: Texture; second: Textu
         attrScope.blend = true;
         attrScope.culling = false;
         attrScope.blendFunc = { src: BlendType.SRC_ALPHA, dest: BlendType.ONE_MINUS_SRC_ALPHA };
-        context.pushAttrScope(attrScope);
 
         // prettier-ignore
         const vertexPos = [// 頂点座標配列
@@ -84,29 +84,44 @@ export class DrawMixTextureShader extends Shader<{ first: Texture; second: Textu
         const posStride = 3;
         const textureStride = 2;
 
-        this.appendVBO('a_position', new Float32Array(vertexPos), posStride);
-        this.appendVBO('a_textureCoord', new Float32Array(textureCoord), textureStride);
-
         const firstTexture = args.first;
         const secondTexture = args.second;
 
-        const firstBindNumber = context.bindTexture2D(firstTexture);
-        const firstUniIndex = context.getUniformLocation(this.program, 'u_texture_first');
-        context.generateMipmap2D(firstTexture);
-        context.uniform1i(firstUniIndex, firstBindNumber);
-        context.setTextureMinMagFilter2D(firstTexture, TextureMinMagFilter.NEAREST, TextureMinMagFilter.NEAREST);
-        context.setTextureWrapFilter2D(firstTexture, TextureWrapFilter.CLAMP_TO_EDGE, TextureWrapFilter.CLAMP_TO_EDGE);
+        new ContextScope(
+            () => {
+                this.appendVBO('a_position', new Float32Array(vertexPos), posStride);
+                this.appendVBO('a_textureCoord', new Float32Array(textureCoord), textureStride);
 
-        const secondBindNumber = context.bindTexture2D(secondTexture);
-        const secondUniIndex = context.getUniformLocation(this.program, 'u_texture_second');
-        context.generateMipmap2D(secondTexture);
-        context.uniform1i(secondUniIndex, secondBindNumber);
-        context.setTextureMinMagFilter2D(secondTexture, TextureMinMagFilter.NEAREST, TextureMinMagFilter.NEAREST);
-        context.setTextureWrapFilter2D(secondTexture, TextureWrapFilter.CLAMP_TO_EDGE, TextureWrapFilter.CLAMP_TO_EDGE);
+                this.bindTexture2DAndAttribute(
+                    'u_texture_first',
+                    firstTexture,
+                    TextureMinMagFilter.NEAREST,
+                    TextureMinMagFilter.NEAREST,
+                    TextureWrapFilter.CLAMP_TO_EDGE,
+                    TextureWrapFilter.CLAMP_TO_EDGE,
+                    true,
+                );
 
-        // 描画
-        context.drawArrays(DrawType.TRIANGLE_STRIP, 0, vertexPos.length / posStride);
+                this.bindTexture2DAndAttribute(
+                    'u_texture_second',
+                    secondTexture,
+                    TextureMinMagFilter.NEAREST,
+                    TextureMinMagFilter.NEAREST,
+                    TextureWrapFilter.CLAMP_TO_EDGE,
+                    TextureWrapFilter.CLAMP_TO_EDGE,
+                    true,
+                );
 
-        context.popAttrScope();
+                // 描画
+                context.drawArrays(DrawType.TRIANGLE_STRIP, 0, vertexPos.length / posStride);
+
+                context.unbindTexture2D(firstTexture);
+                context.unbindTexture2D(secondTexture);
+            },
+            context,
+            attrScope,
+            null,
+            null,
+        );
     }
 }

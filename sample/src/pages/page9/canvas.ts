@@ -15,6 +15,7 @@ import { GLContext } from './gl/context';
 import { Texture } from './gl/texture';
 import { Framebuffer } from './gl/framebuffer';
 import { AttributeScope } from './gl/attribute_scope';
+import { ContextScope } from './gl/context_scope';
 
 // キャンバス
 export class Canvas extends oujElement.CanvasElement implements oujElement.MouseEventListener {
@@ -145,57 +146,65 @@ export class Canvas extends oujElement.CanvasElement implements oujElement.Mouse
         const ccv = gl.getCanvasSize();
         const attrScope = new AttributeScope();
         attrScope.viewport = { x: 0, y: 0, width: ccv.width, height: ccv.height };
-        gl.pushAttrScope(attrScope);
 
-        // キャンバスを白で初期化
-        gl.clearColor2D(1.0, 1.0, 1.0, 1.0);
+        new ContextScope(
+            () => {
+                // キャンバスを白で初期化
+                gl.clearColor2D(1.0, 1.0, 1.0, 1.0);
 
-        const shader = this.drawMixTextureShader;
+                const shader = this.drawMixTextureShader;
 
-        // CanvasとDrawing textureの描画
-        shader.draw({ first: this.canvasTexture, second: this.drawingTexture });
+                // CanvasとDrawing textureの描画
+                shader.draw({ first: this.canvasTexture, second: this.drawingTexture });
 
-        gl.flush();
-
-        gl.popAttrScope();
+                gl.flush();
+            },
+            gl,
+            attrScope,
+            null,
+            null,
+        );
     }
 
-    // frame bufferを透明埋めする
+    // framebufferを透明埋めする
     protected clearTransparent(drawingOnly: boolean = false): void {
         const gl = this.gl;
 
         const attrScope = new AttributeScope();
         attrScope.viewport = { x: 0, y: 0, width: this.textureWidth, height: this.textureHeight };
-        gl.pushAttrScope(attrScope);
 
-        // drawing frame buffer
-        {
-            gl.pushFramebuffer(this.drawingFrameBuffer);
-            gl.bindTexture2DesignatedFramebuffer(this.drawingFrameBuffer, this.drawingTexture);
+        new ContextScope(
+            () => {
+                new ContextScope(
+                    () => {
+                        this.gl.clearColor2D(0.0, 0.0, 0.0, 0.0);
+                    },
+                    gl,
+                    null,
+                    this.drawingFrameBuffer,
+                    this.drawingTexture,
+                );
 
-            this.gl.clearColor2D(0.0, 0.0, 0.0, 0.0);
+                if (drawingOnly) {
+                    // drawing textureのみ
+                    return;
+                }
 
-            gl.popFramebuffer();
-            gl.unbindTexture2D(this.drawingTexture);
-        }
-
-        if (drawingOnly) {
-            // drawing textureのみ
-            return;
-        }
-
-        // canvas frame buffer
-        {
-            gl.pushFramebuffer(this.canvasFrameBuffer);
-            gl.bindTexture2DesignatedFramebuffer(this.canvasFrameBuffer, this.canvasTexture);
-
-            this.gl.clearColor2D(0.0, 0.0, 0.0, 0.0);
-
-            gl.popFramebuffer();
-            gl.unbindTexture2D(this.canvasTexture);
-        }
-
-        gl.popAttrScope();
+                new ContextScope(
+                    () => {
+                        this.gl.clearColor2D(0.0, 0.0, 0.0, 0.0);
+                    },
+                    gl,
+                    null,
+                    this.canvasFrameBuffer,
+                    this.canvasTexture,
+                );
+            },
+            gl,
+            attrScope,
+            null,
+            null,
+        );
     }
 
     // 現在の描画中の線の最新を適用する
@@ -207,15 +216,6 @@ export class Canvas extends oujElement.CanvasElement implements oujElement.Mouse
         // 直前の2点
         const lastPoint = this.nowDrawing.drawingList[dLength - 1];
         const prePoint = this.nowDrawing.drawingList[dLength - 2];
-
-        const gl = this.gl;
-
-        gl.pushFramebuffer(this.drawingFrameBuffer);
-        gl.bindTexture2DesignatedFramebuffer(this.drawingFrameBuffer, this.drawingTexture);
-
-        const attrScope = new AttributeScope();
-        attrScope.viewport = { x: 0, y: 0, width: this.textureWidth, height: this.textureHeight };
-        gl.pushAttrScope(attrScope);
 
         const rect = this.getBoundingClientRect();
         const width = rect.width;
@@ -234,19 +234,27 @@ export class Canvas extends oujElement.CanvasElement implements oujElement.Mouse
         const lineWidth = this.drawLineWidth;
 
         const shader = this.drawLineShader;
-        shader.draw({
-            vertexPos: vertexPos,
-            vertexColor: vertexColor,
-            lineWidth: lineWidth,
-            rect: { width: width, height: height },
-            edgeDivision: Math.max(Math.ceil(lineWidth / 4), 6),
-        });
-        gl.flush();
+        const gl = this.gl;
 
-        gl.popFramebuffer();
-        gl.unbindTexture2D(this.drawingTexture);
+        const attrScope = new AttributeScope();
+        attrScope.viewport = { x: 0, y: 0, width: this.textureWidth, height: this.textureHeight };
 
-        gl.popAttrScope();
+        new ContextScope(
+            () => {
+                shader.draw({
+                    vertexPos: vertexPos,
+                    vertexColor: vertexColor,
+                    lineWidth: lineWidth,
+                    rect: { width: width, height: height },
+                    edgeDivision: Math.max(Math.ceil(lineWidth / 4), 6),
+                });
+                gl.flush();
+            },
+            gl,
+            attrScope,
+            this.drawingFrameBuffer,
+            this.drawingTexture,
+        );
     }
 
     // Canvas textureをUint8Arrayで初期化する
@@ -261,55 +269,53 @@ export class Canvas extends oujElement.CanvasElement implements oujElement.Mouse
 
         const attrScope = new AttributeScope();
         attrScope.viewport = { x: 0, y: 0, width: this.textureWidth, height: this.textureHeight };
-        gl.pushAttrScope(attrScope);
 
-        gl.pushFramebuffer(this.canvasFrameBuffer);
-        gl.bindTexture2DesignatedFramebuffer(this.canvasFrameBuffer, this.canvasTexture);
+        new ContextScope(
+            () => {
+                // ピクセル配列をテクスチャに変換
+                const texture = gl.createTexture();
+                gl.texImage2D_RGBA_8BIT(texture, this.textureWidth, this.textureHeight, 0, pixels);
 
-        // ピクセル配列をテクスチャに変換
-        const texture = gl.createTexture();
-        gl.texImage2D_RGBA_8BIT(texture, this.textureWidth, this.textureHeight, 0, pixels);
+                const shader = this.drawTextureNoBlendShader;
 
-        const shader = this.drawTextureNoBlendShader;
+                shader.draw(texture);
 
-        shader.draw(texture);
-
-        gl.flush();
-
-        gl.popFramebuffer();
-        gl.unbindTexture2D(this.canvasTexture);
-
-        gl.popAttrScope();
+                gl.flush();
+            },
+            gl,
+            attrScope,
+            this.canvasFrameBuffer,
+            this.canvasTexture,
+        );
     }
 
     // 現在のCanvasをChunkに保存する
     protected saveChunk(): void {
         const gl = this.gl;
 
-        gl.pushFramebuffer(this.canvasFrameBuffer);
-        gl.bindTexture2DesignatedFramebuffer(this.canvasFrameBuffer, this.canvasTexture);
-
         const attrScope = new AttributeScope();
         attrScope.viewport = { x: 0, y: 0, width: this.textureWidth, height: this.textureHeight };
-        gl.pushAttrScope(attrScope);
 
-        // drawing textureをCanvas textureに描画
-        const shader = this.drawTextureShader;
-        shader.draw(this.drawingTexture);
+        new ContextScope(
+            () => {
+                // drawing textureをCanvas textureに描画
+                const shader = this.drawTextureShader;
+                shader.draw(this.drawingTexture);
 
-        // ピクセルの色情報を取得
-        const img = new Uint8Array(this.textureWidth * this.textureHeight * 4);
-        gl.readPixels2D(0, 0, this.textureWidth, this.textureHeight, img);
-        this.chunkList.push(new DrawChunk(this.nowDrawing, img));
-        this.backChunkList.splice(0, this.backChunkList.length);
+                // ピクセルの色情報を取得
+                const img = new Uint8Array(this.textureWidth * this.textureHeight * 4);
+                gl.readPixels2D(0, 0, this.textureWidth, this.textureHeight, img);
+                this.chunkList.push(new DrawChunk(this.nowDrawing, img));
+                this.backChunkList.splice(0, this.backChunkList.length);
+            },
+            gl,
+            attrScope,
+            this.canvasFrameBuffer,
+            this.canvasTexture,
+        );
 
         // drawing textureを透明化
         this.clearTransparent(true);
-
-        gl.popFramebuffer();
-        gl.unbindTexture2D(this.canvasTexture);
-
-        gl.popAttrScope();
     }
 
     // mouseoverイベント
