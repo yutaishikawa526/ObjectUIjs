@@ -5,6 +5,7 @@ import * as Element from './element';
 
 // 別名
 type gMouseEvent = globalThis.MouseEvent;
+type gTouchEvent = globalThis.TouchEvent;
 type gHtmlElement = globalThis.HTMLElement;
 type gCSSStyleDeclaration = globalThis.CSSStyleDeclaration;
 type gDOMTokenList = globalThis.DOMTokenList;
@@ -57,10 +58,24 @@ export interface DragEventListener {
     onElementDragLeave(element: HTMLElement, event: DragEvent): void;
 }
 
+// touchイベントリスナー
+export interface TouchEventListener {
+    // タッチ開始
+    onElementTouchStart(element: HTMLElement, event: TouchEvent): void;
+    // タッチ中
+    onElementTouchMove(element: HTMLElement, event: TouchEvent): void;
+    // タッチ終了
+    onElementTouchEnd(element: HTMLElement, event: TouchEvent): void;
+    // タッチキャンセル
+    onElementTouchCancel(element: HTMLElement, event: TouchEvent): void;
+}
+
 // マウスイベント
 export type MouseEvent = Element.ElementEvent<gMouseEvent>;
 // ドラッグイベント
 export type DragEvent = Element.ElementEvent<gDragEvent>;
+// タッチイベント
+export type TouchEvent = Element.ElementEvent<gTouchEvent>;
 
 // マウスイベントハンドラー
 class MouseEventHander extends Element.ElementEventHander<gMouseEvent, HTMLElement, gHtmlElement> {
@@ -161,6 +176,32 @@ class DragEventHander extends Element.ElementEventHander<gDragEvent, HTMLElement
     }
 }
 
+// タッチイベントハンドラー
+class TouchEventHander extends Element.ElementEventHander<gTouchEvent, HTMLElement, gHtmlElement> {
+    // コンストラクタ
+    public constructor(touchListener: TouchEventListener, element: HTMLElement) {
+        const listenter = [
+            {
+                key: 'touchstart',
+                callback: touchListener.onElementTouchStart.bind(touchListener),
+            },
+            {
+                key: 'touchmove',
+                callback: touchListener.onElementTouchMove.bind(touchListener),
+            },
+            {
+                key: 'touchend',
+                callback: touchListener.onElementTouchEnd.bind(touchListener),
+            },
+            {
+                key: 'touchcancel',
+                callback: touchListener.onElementTouchCancel.bind(touchListener),
+            },
+        ];
+        super(listenter, element);
+    }
+}
+
 // HTMLの要素
 export class HTMLElement extends Element.Element {
     // Nodeのオブジェクト
@@ -177,6 +218,8 @@ export class HTMLElement extends Element.Element {
     private clickEventHandler: null | ClickEventHander = null;
     // dragイベントのハンドラー
     private dragEventHandler: null | DragEventHander = null;
+    // touchイベントハンドラー
+    private touchEventHander: null | TouchEventHander = null;
 
     // コンストラクタ
     public constructor(htmlElement: gHtmlElement) {
@@ -281,6 +324,23 @@ export class HTMLElement extends Element.Element {
         // イベント登録
         const handler = new DragEventHander(dragEventListener, this);
         this.dragEventHandler = handler;
+        handler.addTo(this.htmlElement);
+    }
+
+    // touchイベントリスナーを設定する
+    public setTouchEventListener(touchEventListener: TouchEventListener | null): void {
+        if (this.touchEventHander !== null) {
+            // 登録済みイベントを解除
+            const handler = this.touchEventHander;
+            handler.removeFrom(this.htmlElement);
+            this.touchEventHander = null;
+        }
+        if (touchEventListener === null) {
+            return;
+        }
+        // イベント登録
+        const handler = new TouchEventHander(touchEventListener, this);
+        this.touchEventHander = handler;
         handler.addTo(this.htmlElement);
     }
 }

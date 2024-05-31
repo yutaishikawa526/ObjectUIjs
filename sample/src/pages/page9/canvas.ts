@@ -18,7 +18,10 @@ import { AttributeScope } from './gl/attribute_scope';
 import { ContextScope } from './gl/context_scope';
 
 // キャンバス
-export class Canvas extends oujElement.CanvasElement implements oujElement.MouseEventListener {
+export class Canvas
+    extends oujElement.CanvasElement
+    implements oujElement.MouseEventListener, oujElement.TouchEventListener
+{
     // 現在描画中か
     protected isDrawing: boolean = false;
     // 現在描画中の線
@@ -59,6 +62,7 @@ export class Canvas extends oujElement.CanvasElement implements oujElement.Mouse
     public constructor(width: number, height: number) {
         super();
         this.setMouseEventListener(this);
+        this.setTouchEventListener(this);
         this.setWidthHeight(width, height);
 
         const gl = this.getWebGLContent();
@@ -135,6 +139,10 @@ export class Canvas extends oujElement.CanvasElement implements oujElement.Mouse
     // 主ボタンが押されているか判定する
     protected isMainButtonDown(event: oujElement.MouseEvent): boolean {
         return event.event.buttons % 2 === 1;
+    }
+    // touchが一本指かどうか判定する
+    protected isSingleFingure(event: oujElement.TouchEvent): boolean {
+        return event.event.touches.length === 1;
     }
 
     // frameBufferをcanvasに描画する
@@ -324,6 +332,9 @@ export class Canvas extends oujElement.CanvasElement implements oujElement.Mouse
             return;
         }
         event.event.stopPropagation();
+        if (event.event.cancelable) {
+            event.event.preventDefault();
+        }
     }
     // mousedownイベント
     public onElementMouseDown(element: oujElement.HTMLElement, event: oujElement.MouseEvent): void {
@@ -331,6 +342,9 @@ export class Canvas extends oujElement.CanvasElement implements oujElement.Mouse
             return;
         }
         event.event.stopPropagation();
+        if (event.event.cancelable) {
+            event.event.preventDefault();
+        }
         if (!this.isDrawing && this.isMainButtonDown(event)) {
             // 描画開始
             this.isDrawing = true;
@@ -344,6 +358,9 @@ export class Canvas extends oujElement.CanvasElement implements oujElement.Mouse
             return;
         }
         event.event.stopPropagation();
+        if (event.event.cancelable) {
+            event.event.preventDefault();
+        }
     }
     // mouseleaveイベント
     public onElementMouseLeave(element: oujElement.HTMLElement, event: oujElement.MouseEvent): void {
@@ -351,6 +368,23 @@ export class Canvas extends oujElement.CanvasElement implements oujElement.Mouse
             return;
         }
         event.event.stopPropagation();
+        if (event.event.cancelable) {
+            event.event.preventDefault();
+        }
+        if (this.isDrawing) {
+            // マウスが離れたとき描画を終了する
+            this.isDrawing = false;
+            this.setNowDrawingList(element, event);
+
+            // 画像に適用
+            this.drawLastDrawing();
+            this.drawCanvas();
+
+            // chunkとして保存
+            this.saveChunk();
+
+            this.nowDrawing = new DrawingList();
+        }
     }
     // mousemoveイベント
     public onElementMouseMove(element: oujElement.HTMLElement, event: oujElement.MouseEvent): void {
@@ -358,6 +392,9 @@ export class Canvas extends oujElement.CanvasElement implements oujElement.Mouse
             return;
         }
         event.event.stopPropagation();
+        if (event.event.cancelable) {
+            event.event.preventDefault();
+        }
         if (this.isDrawing && this.isMainButtonDown(event)) {
             // 画像に適用
             this.setNowDrawingList(element, event);
@@ -371,6 +408,9 @@ export class Canvas extends oujElement.CanvasElement implements oujElement.Mouse
             return;
         }
         event.event.stopPropagation();
+        if (event.event.cancelable) {
+            event.event.preventDefault();
+        }
         if (this.isDrawing && !this.isMainButtonDown(event)) {
             // 描画中かつマウスが上がったとき描画を終了する
             this.isDrawing = false;
@@ -392,12 +432,117 @@ export class Canvas extends oujElement.CanvasElement implements oujElement.Mouse
             return;
         }
         event.event.stopPropagation();
+        if (event.event.cancelable) {
+            event.event.preventDefault();
+        }
+        if (this.isDrawing) {
+            // マウスが離れたとき描画を終了する
+            this.isDrawing = false;
+            this.setNowDrawingList(element, event);
+
+            // 画像に適用
+            this.drawLastDrawing();
+            this.drawCanvas();
+
+            // chunkとして保存
+            this.saveChunk();
+
+            this.nowDrawing = new DrawingList();
+        }
+    }
+
+    // タッチ開始
+    public onElementTouchStart(element: oujElement.HTMLElement, event: oujElement.TouchEvent): void {
+        if (element.getElementId() !== this.getElementId()) {
+            return;
+        }
+        event.event.stopPropagation();
+        if (event.event.cancelable) {
+            event.event.preventDefault();
+        }
+        if (!this.isDrawing && this.isSingleFingure(event)) {
+            // 描画開始
+            this.isDrawing = true;
+            this.nowDrawing.drawingList = [];
+            this.setNowDrawingListByTouch(element, event);
+        }
+    }
+    // タッチ中
+    public onElementTouchMove(element: oujElement.HTMLElement, event: oujElement.TouchEvent): void {
+        if (element.getElementId() !== this.getElementId()) {
+            return;
+        }
+        event.event.stopPropagation();
+        if (event.event.cancelable) {
+            event.event.preventDefault();
+        }
+        if (this.isDrawing && this.isSingleFingure(event)) {
+            // 画像に適用
+            this.setNowDrawingListByTouch(element, event);
+            this.drawLastDrawing();
+            this.drawCanvas();
+        }
+    }
+    // タッチ終了
+    public onElementTouchEnd(element: oujElement.HTMLElement, event: oujElement.TouchEvent): void {
+        if (element.getElementId() !== this.getElementId()) {
+            return;
+        }
+        event.event.stopPropagation();
+        if (event.event.cancelable) {
+            event.event.preventDefault();
+        }
+        if (this.isDrawing && !this.isSingleFingure(event)) {
+            // 描画中かつ一本指でなくなったときに描画を終了する
+            this.isDrawing = false;
+
+            // chunkとして保存
+            this.saveChunk();
+
+            this.nowDrawing = new DrawingList();
+        }
+    }
+    // タッチキャンセル
+    public onElementTouchCancel(element: oujElement.HTMLElement, event: oujElement.TouchEvent): void {
+        if (element.getElementId() !== this.getElementId()) {
+            return;
+        }
+        event.event.stopPropagation();
+        if (event.event.cancelable) {
+            event.event.preventDefault();
+        }
+        if (this.isDrawing) {
+            this.isDrawing = false;
+
+            // chunkとして保存
+            this.saveChunk();
+
+            this.nowDrawing = new DrawingList();
+        }
     }
 
     // マウスイベントから現在描画中の描画一覧に保存する
     protected setNowDrawingList(element: oujElement.HTMLElement, event: oujElement.MouseEvent) {
         const cX = event.event.clientX;
         const cY = event.event.clientY;
+        const rect = element.getBoundingClientRect();
+        const top = rect.top;
+        const left = rect.left;
+        const w = rect.width;
+        const h = rect.height;
+        if (w <= 0 || h <= 0) {
+            return;
+        }
+        this.nowDrawing.drawingList.push({ x: (cX - left) / w, y: (cY - top) / h });
+    }
+
+    // touchイベントから現在描画中の描画一覧に保存する
+    protected setNowDrawingListByTouch(element: oujElement.HTMLElement, event: oujElement.TouchEvent) {
+        if (event.event.touches.length === 0) {
+            return;
+        }
+        const cX = event.event.touches[0].clientX;
+        const cY = event.event.touches[0].clientY;
         const rect = element.getBoundingClientRect();
         const top = rect.top;
         const left = rect.left;
