@@ -2,10 +2,13 @@
  * 2枚のテクスチャを指定して、1枚目に2枚目をアルファブレンドで描画したものを
  * アルファブレンドでフレームバッファーに描画
  */
-import { Shader } from './base';
+import { Shader } from '../gl/shader';
+import { AttributeScope } from '../gl/attribute_scope';
+import { DrawType, BlendType, TextureMinMagFilter, TextureWrapFilter } from '../gl/type';
+import { Texture } from '../gl/texture';
 
 // テクスチャをそのまま描画
-export class DrawMixTextureShader extends Shader<{ first: WebGLTexture; second: WebGLTexture }> {
+export class DrawMixTextureShader extends Shader<{ first: Texture; second: Texture }> {
     // 頂点shaderプログラムを取得する
     protected getVertexShaderSource(): string {
         // prettier-ignore
@@ -50,14 +53,17 @@ export class DrawMixTextureShader extends Shader<{ first: WebGLTexture; second: 
     }
 
     // 描画処理のコア処理
-    protected drawCore(args: { first: WebGLTexture; second: WebGLTexture }): void {
+    protected drawCore(args: { first: Texture; second: Texture }): void {
         if (this.program === null) {
             throw new Error('programが初期化されていません。');
         }
-        const gl = this.gl;
+        const context = this.context;
 
-        gl.enable(gl.BLEND);
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        const attrScope = new AttributeScope();
+        attrScope.blend = true;
+        attrScope.culling = false;
+        attrScope.blendFunc = { src: BlendType.SRC_ALPHA, dest: BlendType.ONE_MINUS_SRC_ALPHA };
+        context.pushAttrScope(attrScope);
 
         // prettier-ignore
         const vertexPos = [// 頂点座標配列
@@ -84,27 +90,23 @@ export class DrawMixTextureShader extends Shader<{ first: WebGLTexture; second: 
         const firstTexture = args.first;
         const secondTexture = args.second;
 
-        gl.activeTexture(gl.TEXTURE5);
-        gl.bindTexture(gl.TEXTURE_2D, firstTexture);
-        const firstUniIndex = gl.getUniformLocation(this.program, 'u_texture_first');
-        gl.generateMipmap(gl.TEXTURE_2D);
-        gl.uniform1i(firstUniIndex, 5);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        const firstBindNumber = context.bindTexture2D(firstTexture);
+        const firstUniIndex = context.getUniformLocation(this.program, 'u_texture_first');
+        context.generateMipmap2D(firstTexture);
+        context.uniform1i(firstUniIndex, firstBindNumber);
+        context.setTextureMinMagFilter2D(firstTexture, TextureMinMagFilter.NEAREST, TextureMinMagFilter.NEAREST);
+        context.setTextureWrapFilter2D(firstTexture, TextureWrapFilter.CLAMP_TO_EDGE, TextureWrapFilter.CLAMP_TO_EDGE);
 
-        gl.activeTexture(gl.TEXTURE6);
-        gl.bindTexture(gl.TEXTURE_2D, secondTexture);
-        const secondUniIndex = gl.getUniformLocation(this.program, 'u_texture_second');
-        gl.generateMipmap(gl.TEXTURE_2D);
-        gl.uniform1i(secondUniIndex, 6);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        const secondBindNumber = context.bindTexture2D(secondTexture);
+        const secondUniIndex = context.getUniformLocation(this.program, 'u_texture_second');
+        context.generateMipmap2D(secondTexture);
+        context.uniform1i(secondUniIndex, secondBindNumber);
+        context.setTextureMinMagFilter2D(secondTexture, TextureMinMagFilter.NEAREST, TextureMinMagFilter.NEAREST);
+        context.setTextureWrapFilter2D(secondTexture, TextureWrapFilter.CLAMP_TO_EDGE, TextureWrapFilter.CLAMP_TO_EDGE);
 
         // 描画
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, vertexPos.length / posStride);
+        context.drawArrays(DrawType.TRIANGLE_STRIP, 0, vertexPos.length / posStride);
 
-        gl.disable(gl.BLEND);
+        context.popAttrScope();
     }
 }

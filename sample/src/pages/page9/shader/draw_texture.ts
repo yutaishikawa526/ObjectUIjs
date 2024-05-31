@@ -1,10 +1,13 @@
 /**
  * テクスチャをアルファブレンドでそのまま描画するshader
  */
-import { Shader } from './base';
+import { Shader } from '../gl/shader';
+import { AttributeScope } from '../gl/attribute_scope';
+import { DrawType, BlendType, TextureMinMagFilter, TextureWrapFilter } from '../gl/type';
+import { Texture } from '../gl/texture';
 
 // テクスチャをそのまま描画
-export class DrawTextureShader extends Shader<WebGLTexture> {
+export class DrawTextureShader extends Shader<Texture> {
     // 頂点shaderプログラムを取得する
     protected getVertexShaderSource(): string {
         // prettier-ignore
@@ -41,35 +44,14 @@ export class DrawTextureShader extends Shader<WebGLTexture> {
     }
 
     // 描画処理のコア処理
-    protected drawCore(texture: WebGLTexture): void {
+    protected drawCore(texture: Texture): void {
         if (this.program === null) {
             throw new Error('programが初期化されていません。');
         }
-        const gl = this.gl;
+        const context = this.context;
 
-        this.setBlendAndVBO();
-
-        gl.activeTexture(gl.TEXTURE4);
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        const textureUniIndex = gl.getUniformLocation(this.program, 'u_texture');
-        gl.generateMipmap(gl.TEXTURE_2D);
-        gl.uniform1i(textureUniIndex, 4);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-
-        // 描画
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-
-        gl.disable(gl.BLEND);
-    }
-
-    // blend設定とVBOの設定を行う
-    protected setBlendAndVBO(): void {
-        const gl = this.gl;
-
-        gl.enable(gl.BLEND);
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        const attrScope = this.createAttrScope();
+        context.pushAttrScope(attrScope);
 
         // prettier-ignore
         const vertexPos = [// 頂点座標配列
@@ -92,5 +74,27 @@ export class DrawTextureShader extends Shader<WebGLTexture> {
 
         this.appendVBO('a_position', new Float32Array(vertexPos), posStride);
         this.appendVBO('a_textureCoord', new Float32Array(textureCoord), textureStride);
+
+        const texBindNumber = context.bindTexture2D(texture);
+        const textureUniIndex = context.getUniformLocation(this.program, 'u_texture');
+        context.generateMipmap2D(texture);
+        context.uniform1i(textureUniIndex, texBindNumber);
+        context.setTextureMinMagFilter2D(texture, TextureMinMagFilter.NEAREST, TextureMinMagFilter.NEAREST);
+        context.setTextureWrapFilter2D(texture, TextureWrapFilter.CLAMP_TO_EDGE, TextureWrapFilter.CLAMP_TO_EDGE);
+
+        // 描画
+        context.drawArrays(DrawType.TRIANGLE_STRIP, 0, 4);
+
+        context.unbindTexture2D(texture);
+        context.popAttrScope();
+    }
+
+    // attrスコープの作成
+    protected createAttrScope(): AttributeScope {
+        const attrScope = new AttributeScope();
+        attrScope.blend = true;
+        attrScope.culling = false;
+        attrScope.blendFunc = { src: BlendType.SRC_ALPHA, dest: BlendType.ONE_MINUS_SRC_ALPHA };
+        return attrScope;
     }
 }

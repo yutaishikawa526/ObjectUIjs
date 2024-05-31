@@ -1,7 +1,9 @@
 /**
  * 線を描画するshader
  */
-import { Shader } from './base';
+import { Shader } from '../gl/shader';
+import { AttributeScope } from '../gl/attribute_scope';
+import { DrawType, BlendType } from '../gl/type';
 
 // 線を描画
 export class DrawLineShader extends Shader<{
@@ -55,7 +57,7 @@ export class DrawLineShader extends Shader<{
         if (this.program === null) {
             throw new Error('programが初期化されていません。');
         }
-        const gl = this.gl;
+        const context = this.context;
 
         const vertexPos = args.vertexPos;
         const vertexColor = args.vertexColor;
@@ -76,9 +78,11 @@ export class DrawLineShader extends Shader<{
             throw new Error('端の分割は0以上を指定する必要があります。');
         }
 
-        gl.enable(gl.BLEND);
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-        gl.disable(gl.CULL_FACE); // 表裏を無視
+        const attrScope = new AttributeScope();
+        attrScope.blend = true;
+        attrScope.culling = false;
+        attrScope.blendFunc = { src: BlendType.SRC_ALPHA, dest: BlendType.ONE_MINUS_SRC_ALPHA };
+        context.pushAttrScope(attrScope);
 
         const vertexStride = 2;
         const colorStride = 4;
@@ -243,8 +247,8 @@ export class DrawLineShader extends Shader<{
 
         this.appendUniform('u_matrix', projMatrix);
 
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, modifiedVPos.length / vertexStride);
+        context.drawArrays(DrawType.TRIANGLE_STRIP, 0, modifiedVPos.length / vertexStride);
 
-        gl.disable(gl.BLEND);
+        context.popAttrScope();
     }
 }

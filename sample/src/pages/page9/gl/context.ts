@@ -473,7 +473,7 @@ export class GLContext {
         const gl = this.glContext;
 
         this.bindTexture2D(texture);
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture.glTexture, 0);
     }
 
     // framebufferとテクスチャを指定してframebufferにテクスチャを紐付ける
@@ -521,6 +521,13 @@ export class GLContext {
         } else {
             return framebuffer.getFBId() === this.framebufferStack[len - 1].getFBId();
         }
+    }
+
+    // framebufferを全て取り除き、デフォルトに設定する
+    public setDefaultFramebuffer(): void {
+        const gl = this.glContext;
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        this.framebufferStack = [];
     }
 
     // ----------- 描画関連の処理 -----------
