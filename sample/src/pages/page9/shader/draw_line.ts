@@ -2,7 +2,7 @@
  * 線を描画するshader
  */
 import { Shader } from '../gl/shader';
-import { AttributeScope } from '../gl/attribute_scope';
+import { ContextAttribute } from '../gl/context_attribute';
 import { DrawType, BlendType } from '../gl/type';
 import { ContextScope } from '../gl/context_scope';
 
@@ -237,10 +237,10 @@ export class DrawLineShader extends Shader<{
             -1.0, 1.0, 0.0, 1.0,
         ];
 
-        const attrScope = new AttributeScope();
-        attrScope.blend = true;
-        attrScope.culling = false;
-        attrScope.blendFunc = { src: BlendType.SRC_ALPHA, dest: BlendType.ONE_MINUS_SRC_ALPHA };
+        const attr = new ContextAttribute();
+        attr.blend = true;
+        attr.culling = false;
+        attr.blendFunc = { src: BlendType.SRC_ALPHA, dest: BlendType.ONE_MINUS_SRC_ALPHA };
 
         new ContextScope(
             () => {
@@ -252,7 +252,7 @@ export class DrawLineShader extends Shader<{
                 context.drawArrays(DrawType.TRIANGLE_STRIP, 0, modifiedVPos.length / vertexStride);
             },
             context,
-            attrScope,
+            attr,
             null,
             null,
         );

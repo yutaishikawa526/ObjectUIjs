@@ -3,7 +3,7 @@
  * アルファブレンドでフレームバッファーに描画
  */
 import { Shader } from '../gl/shader';
-import { AttributeScope } from '../gl/attribute_scope';
+import { ContextAttribute } from '../gl/context_attribute';
 import { DrawType, BlendType, TextureMinMagFilter, TextureWrapFilter } from '../gl/type';
 import { Texture } from '../gl/texture';
 import { ContextScope } from '../gl/context_scope';
@@ -60,10 +60,10 @@ export class DrawMixTextureShader extends Shader<{ first: Texture; second: Textu
         }
         const context = this.context;
 
-        const attrScope = new AttributeScope();
-        attrScope.blend = true;
-        attrScope.culling = false;
-        attrScope.blendFunc = { src: BlendType.SRC_ALPHA, dest: BlendType.ONE_MINUS_SRC_ALPHA };
+        const attr = new ContextAttribute();
+        attr.blend = true;
+        attr.culling = false;
+        attr.blendFunc = { src: BlendType.SRC_ALPHA, dest: BlendType.ONE_MINUS_SRC_ALPHA };
 
         // prettier-ignore
         const vertexPos = [// 頂点座標配列
@@ -119,7 +119,7 @@ export class DrawMixTextureShader extends Shader<{ first: Texture; second: Textu
                 context.unbindTexture2D(secondTexture);
             },
             context,
-            attrScope,
+            attr,
             null,
             null,
         );

@@ -3,13 +3,14 @@
  */
 import { GLContext } from './context';
 import { Texture } from './texture';
+import { Program } from './program';
 import { BufferStoreType, AttributeType, TextureMinMagFilter, TextureWrapFilter } from './type';
 
 // shaderクラス
 // Tは描画のときの引数の型を指定する
 export abstract class Shader<T> {
     // shaderプログラム
-    protected program: WebGLProgram | null = null;
+    protected program: Program | null = null;
     // コンテキスト
     protected context: GLContext;
 

@@ -5,7 +5,7 @@
 import { BlendType } from './type';
 
 // 属性
-export class AttributeScope {
+export class ContextAttribute {
     // viewport設定
     public viewport: { x: number; y: number; width: number; height: number } | null = null;
     // blend有効かどうか
@@ -20,8 +20,8 @@ export class AttributeScope {
     public blendFunc: { src: BlendType; dest: BlendType } | null = null;
 
     // 値をcloneする
-    public clone(): AttributeScope {
-        const cln = new AttributeScope();
+    public clone(): ContextAttribute {
+        const cln = new ContextAttribute();
         if (this.viewport === null) {
             cln.viewport = null;
         } else {
@@ -46,7 +46,7 @@ export class AttributeScope {
 
     // 値をcopyする
     // ただしnullの値のもののみ
-    public copy(attr: AttributeScope): void {
+    public copy(attr: ContextAttribute): void {
         const cln = attr.clone();
         if (this.viewport === null) {
             this.viewport = cln.viewport;

@@ -1,7 +1,6 @@
 /**
  * glのテクスチャのラッパー
  */
-import { GLContext } from './context';
 import { GLObject } from './gl_object';
 
 // テクスチャクラス
@@ -10,8 +9,8 @@ export class Texture extends GLObject {
     public readonly glTexture: WebGLTexture;
 
     // コンストラクタ
-    public constructor(context: GLContext, glTexture: WebGLTexture) {
-        super(context);
+    public constructor(glTexture: WebGLTexture) {
+        super();
         this.glTexture = glTexture;
     }
 

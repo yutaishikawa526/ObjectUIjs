@@ -9,7 +9,8 @@ import { Texture } from './texture';
 import { Framebuffer } from './framebuffer';
 import { ArrayBuffer } from './array_buffer';
 import { GLObject } from './gl_object';
-import { AttributeScope } from './attribute_scope';
+import { ContextAttribute } from './context_attribute';
+import { Program } from './program';
 
 // bind情報
 type BindInfo = { bindIndex: number; bindNumber: number };
@@ -30,7 +31,7 @@ export class GLContext {
     // 有効なGLObjectのID一覧
     private objectIdList: Array<number> = [];
     // 属性のスコープのスタック
-    private attrScopeStack: Array<AttributeScope> = [];
+    private contextAttrStack: Array<ContextAttribute> = [];
 
     // コンストラクタ
     public constructor(gl: WebGLRenderingContext) {
@@ -135,9 +136,9 @@ export class GLContext {
     }
 
     // 最新の属性スコープを取得する
-    private getLastAttrScope(): AttributeScope {
-        if (this.attrScopeStack.length === 0) {
-            const attr = new AttributeScope();
+    private getLastAttrScope(): ContextAttribute {
+        if (this.contextAttrStack.length === 0) {
+            const attr = new ContextAttribute();
             attr.blend = false;
             attr.culling = false;
             attr.depth = false;
@@ -147,12 +148,12 @@ export class GLContext {
             attr.viewport = { x: 0, y: 0, width: cvv.width, height: cvv.height };
             return attr;
         } else {
-            return this.attrScopeStack[this.attrScopeStack.length - 1];
+            return this.contextAttrStack[this.contextAttrStack.length - 1];
         }
     }
 
     // 属性スコープを指定して適用する
-    private appendAttrScope(attr: AttributeScope): void {
+    private appendAttrScope(attr: ContextAttribute): void {
         const gl = this.glContext;
 
         if (attr.blend === true) {
@@ -245,7 +246,7 @@ export class GLContext {
         if (texture === null) {
             throw new Error('テクスチャの作成に失敗しました。');
         }
-        const texObj = new Texture(this, texture);
+        const texObj = new Texture(texture);
         this.registerGLObject(texObj);
         return texObj;
     }
@@ -466,7 +467,7 @@ export class GLContext {
         if (framebuffer === null) {
             throw new Error('framebufferの作成に失敗しました。');
         }
-        const fbObj = new Framebuffer(this, framebuffer);
+        const fbObj = new Framebuffer(framebuffer);
         this.registerGLObject(fbObj);
 
         return fbObj;
@@ -594,7 +595,7 @@ export class GLContext {
     // ----------- shaderの処理 -----------
 
     // shaderプログラムを作成する
-    public compileShaderProgram(vertexSource: string, fragmentSource: string): WebGLProgram {
+    public compileShaderProgram(vertexSource: string, fragmentSource: string): Program {
         const gl = this.glContext;
         const vShader: WebGLShader | null = gl.createShader(gl.VERTEX_SHADER);
         const fShader: WebGLShader | null = gl.createShader(gl.FRAGMENT_SHADER);
@@ -628,12 +629,16 @@ export class GLContext {
             throw new Error('programのリンクに失敗しました。\n' + gl.getProgramInfoLog(program));
         }
 
-        return program;
+        const pObj = new Program(program);
+        this.registerGLObject(pObj);
+
+        return pObj;
     }
 
     // shaderプログラムを有効化する
-    public useProgram(program: WebGLProgram): void {
-        this.glContext.useProgram(program);
+    public useProgram(program: Program): void {
+        this.checkGLObject(program);
+        this.glContext.useProgram(program.program);
     }
 
     // ----------- shader変数関連の処理 -----------
@@ -644,7 +649,7 @@ export class GLContext {
         if (buffer === null) {
             throw new Error('bufferオブジェクトの作成に失敗しました。');
         }
-        const bufferObj = new ArrayBuffer(this, buffer);
+        const bufferObj = new ArrayBuffer(buffer);
         this.registerGLObject(bufferObj);
 
         return bufferObj;
@@ -722,13 +727,13 @@ export class GLContext {
     }
 
     // 頂点属性の名前からインデックスを取得する
-    public getAttribLocation(program: WebGLProgram, varName: string): number {
-        return this.glContext.getAttribLocation(program, varName);
+    public getAttribLocation(program: Program, varName: string): number {
+        return this.glContext.getAttribLocation(program.program, varName);
     }
 
     // uniform変数の名前からインデックスを取得する
-    public getUniformLocation(program: WebGLProgram, varName: string): WebGLUniformLocation | null {
-        return this.glContext.getUniformLocation(program, varName);
+    public getUniformLocation(program: Program, varName: string): WebGLUniformLocation | null {
+        return this.glContext.getUniformLocation(program.program, varName);
     }
 
     // uniform変数に値を設定する
@@ -775,17 +780,17 @@ export class GLContext {
     }
 
     // 属性スコープを設定する
-    public pushAttrScope(attr: AttributeScope): void {
+    public pushAttrScope(attr: ContextAttribute): void {
         const last = this.getLastAttrScope();
-        const attrScope = attr.clone();
-        attrScope.copy(last);
-        this.attrScopeStack.push(attrScope);
-        this.appendAttrScope(attrScope);
+        const attribute = attr.clone();
+        attribute.copy(last);
+        this.contextAttrStack.push(attribute);
+        this.appendAttrScope(attribute);
     }
 
     // 最新の属性スコープを取り除く
     public popAttrScope(): void {
-        this.attrScopeStack.pop();
+        this.contextAttrStack.pop();
         const last = this.getLastAttrScope();
         this.appendAttrScope(last);
     }

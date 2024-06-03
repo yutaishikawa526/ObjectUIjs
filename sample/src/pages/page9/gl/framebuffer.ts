@@ -1,7 +1,6 @@
 /**
  * framebufferのラッパークラス
  */
-import { GLContext } from './context';
 import { GLObject } from './gl_object';
 
 // フレームバッファー
@@ -10,8 +9,8 @@ export class Framebuffer extends GLObject {
     public readonly framebuffer: WebGLFramebuffer;
 
     // コンストラクタ
-    public constructor(context: GLContext, framebuffer: WebGLFramebuffer) {
-        super(context);
+    public constructor(framebuffer: WebGLFramebuffer) {
+        super();
         this.framebuffer = framebuffer;
     }
 

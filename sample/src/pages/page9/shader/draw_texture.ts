@@ -2,7 +2,7 @@
  * テクスチャをアルファブレンドでそのまま描画するshader
  */
 import { Shader } from '../gl/shader';
-import { AttributeScope } from '../gl/attribute_scope';
+import { ContextAttribute } from '../gl/context_attribute';
 import { DrawType, BlendType, TextureMinMagFilter, TextureWrapFilter } from '../gl/type';
 import { Texture } from '../gl/texture';
 import { ContextScope } from '../gl/context_scope';
@@ -98,11 +98,11 @@ export class DrawTextureShader extends Shader<Texture> {
     }
 
     // attrスコープの作成
-    protected createAttrScope(): AttributeScope {
-        const attrScope = new AttributeScope();
-        attrScope.blend = true;
-        attrScope.culling = false;
-        attrScope.blendFunc = { src: BlendType.SRC_ALPHA, dest: BlendType.ONE_MINUS_SRC_ALPHA };
-        return attrScope;
+    protected createAttrScope(): ContextAttribute {
+        const attr = new ContextAttribute();
+        attr.blend = true;
+        attr.culling = false;
+        attr.blendFunc = { src: BlendType.SRC_ALPHA, dest: BlendType.ONE_MINUS_SRC_ALPHA };
+        return attr;
     }
 }

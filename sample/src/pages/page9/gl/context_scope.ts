@@ -5,7 +5,7 @@ import { Scope } from '../scope';
 import { Framebuffer } from './framebuffer';
 import { Texture } from './texture';
 import { GLContext } from './context';
-import { AttributeScope } from './attribute_scope';
+import { ContextAttribute } from './context_attribute';
 
 export class ContextScope extends Scope {
     // コンテキスト
@@ -15,7 +15,7 @@ export class ContextScope extends Scope {
     // フレームバッファーに紐づけるテクスチャ
     protected readonly framebufferTexture: Texture | null = null;
     // 属性のスコープ
-    protected readonly attrScope: AttributeScope | null = null;
+    protected readonly attribute: ContextAttribute | null = null;
 
     // 実行前に呼ばれる
     public before(): void {
@@ -33,8 +33,8 @@ export class ContextScope extends Scope {
         }
 
         // 属性のスコープ
-        if (this.attrScope !== null) {
-            context.pushAttrScope(this.attrScope);
+        if (this.attribute !== null) {
+            context.pushAttrScope(this.attribute);
         }
     }
     // 実行後に呼ばれる
@@ -42,7 +42,7 @@ export class ContextScope extends Scope {
         const context = this.context;
 
         // 属性のスコープ
-        if (this.attrScope !== null) {
+        if (this.attribute !== null) {
             context.popAttrScope();
         }
 
@@ -61,7 +61,7 @@ export class ContextScope extends Scope {
     public constructor(
         callback: () => void,
         context: GLContext,
-        attrScope: AttributeScope | null = null,
+        attribute: ContextAttribute | null = null,
         framebuffer: Framebuffer | null = null,
         framebufferTexture: Texture | null = null,
     ) {
@@ -69,7 +69,7 @@ export class ContextScope extends Scope {
         this.context = context;
         this.framebuffer = framebuffer;
         this.framebufferTexture = framebufferTexture;
-        this.attrScope = attrScope;
+        this.attribute = attribute;
 
         this.exec();
     }

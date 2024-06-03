@@ -14,7 +14,7 @@ import { DrawTextureNoBlendShader } from './shader/draw_texture_noblend';
 import { GLContext } from './gl/context';
 import { Texture } from './gl/texture';
 import { Framebuffer } from './gl/framebuffer';
-import { AttributeScope } from './gl/attribute_scope';
+import { ContextAttribute } from './gl/context_attribute';
 import { ContextScope } from './gl/context_scope';
 
 // キャンバス
@@ -152,8 +152,8 @@ export class Canvas
         gl.setDefaultFramebuffer();
 
         const ccv = gl.getCanvasSize();
-        const attrScope = new AttributeScope();
-        attrScope.viewport = { x: 0, y: 0, width: ccv.width, height: ccv.height };
+        const attr = new ContextAttribute();
+        attr.viewport = { x: 0, y: 0, width: ccv.width, height: ccv.height };
 
         new ContextScope(
             () => {
@@ -168,7 +168,7 @@ export class Canvas
                 gl.flush();
             },
             gl,
-            attrScope,
+            attr,
             null,
             null,
         );
@@ -178,8 +178,8 @@ export class Canvas
     protected clearTransparent(drawingOnly: boolean = false): void {
         const gl = this.gl;
 
-        const attrScope = new AttributeScope();
-        attrScope.viewport = { x: 0, y: 0, width: this.textureWidth, height: this.textureHeight };
+        const attr = new ContextAttribute();
+        attr.viewport = { x: 0, y: 0, width: this.textureWidth, height: this.textureHeight };
 
         new ContextScope(
             () => {
@@ -209,7 +209,7 @@ export class Canvas
                 );
             },
             gl,
-            attrScope,
+            attr,
             null,
             null,
         );
@@ -244,8 +244,8 @@ export class Canvas
         const shader = this.drawLineShader;
         const gl = this.gl;
 
-        const attrScope = new AttributeScope();
-        attrScope.viewport = { x: 0, y: 0, width: this.textureWidth, height: this.textureHeight };
+        const attr = new ContextAttribute();
+        attr.viewport = { x: 0, y: 0, width: this.textureWidth, height: this.textureHeight };
 
         new ContextScope(
             () => {
@@ -259,7 +259,7 @@ export class Canvas
                 gl.flush();
             },
             gl,
-            attrScope,
+            attr,
             this.drawingFrameBuffer,
             this.drawingTexture,
         );
@@ -275,8 +275,8 @@ export class Canvas
         // 透明で初期化
         this.clearTransparent();
 
-        const attrScope = new AttributeScope();
-        attrScope.viewport = { x: 0, y: 0, width: this.textureWidth, height: this.textureHeight };
+        const attr = new ContextAttribute();
+        attr.viewport = { x: 0, y: 0, width: this.textureWidth, height: this.textureHeight };
 
         new ContextScope(
             () => {
@@ -291,7 +291,7 @@ export class Canvas
                 gl.flush();
             },
             gl,
-            attrScope,
+            attr,
             this.canvasFrameBuffer,
             this.canvasTexture,
         );
@@ -301,8 +301,8 @@ export class Canvas
     protected saveChunk(): void {
         const gl = this.gl;
 
-        const attrScope = new AttributeScope();
-        attrScope.viewport = { x: 0, y: 0, width: this.textureWidth, height: this.textureHeight };
+        const attr = new ContextAttribute();
+        attr.viewport = { x: 0, y: 0, width: this.textureWidth, height: this.textureHeight };
 
         new ContextScope(
             () => {
@@ -317,7 +317,7 @@ export class Canvas
                 this.backChunkList.splice(0, this.backChunkList.length);
             },
             gl,
-            attrScope,
+            attr,
             this.canvasFrameBuffer,
             this.canvasTexture,
         );
