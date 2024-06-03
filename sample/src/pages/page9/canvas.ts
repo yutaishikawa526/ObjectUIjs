@@ -7,16 +7,15 @@
  */
 import { element as oujElement, util as oujUtil, task as oujTask } from 'objectuijs';
 import { DrawChunk, DrawingList } from './chunk';
-import { DrawLineShader } from './shader/draw_line';
 import { DrawTextureShader } from './shader/draw_texture';
 import { DrawMixTextureShader } from './shader/draw_mix_texture';
 import { DrawTextureNoBlendShader } from './shader/draw_texture_noblend';
-import { DrawPointsShader } from './shader/draw_points';
 import { GLContext } from './gl/context';
 import { Texture } from './gl/texture';
 import { Framebuffer } from './gl/framebuffer';
 import { ContextAttribute } from './gl/context_attribute';
 import { ContextScope } from './gl/context_scope';
+import { NormalPen } from './pen/normal_pen';
 
 // キャンバス
 export class Canvas
@@ -31,22 +30,24 @@ export class Canvas
     protected readonly chunkList: Array<DrawChunk> = [];
     // 戻る中のchunkの一覧
     protected readonly backChunkList: Array<DrawChunk> = [];
-    // Canvasのframe bufferのテキスチャ
+    // Canvasのframebufferのテキスチャ
     protected readonly canvasTexture: Texture;
-    // Canvasのframe buffer
+    // Canvasのframebuffer
     protected readonly canvasFrameBuffer: Framebuffer;
     // 現在描画中のテキスチャ
     protected readonly drawingTexture: Texture;
     // 現在描画中のframebuffer
     protected readonly drawingFrameBuffer: Framebuffer;
+    // 選択範囲のテクスチャ
+    protected readonly selectAreaTexture: Texture;
+    // 選択範囲のframebuffer
+    protected readonly selectAreaFramebuffer: Framebuffer;
     // 高さ
     protected readonly textureHeight: number;
     // 幅
     protected readonly textureWidth: number;
     // glコンテキスト
     protected readonly gl: GLContext;
-    // 線の描画のshader
-    protected readonly drawLineShader: DrawLineShader;
     // テクスチャ描画のshader
     protected readonly drawTextureShader: DrawTextureShader;
     // 1枚目のテクスチャに2枚目をアルファブレンドしたものをアルファブレンドする
@@ -54,8 +55,8 @@ export class Canvas
     protected readonly drawMixTextureShader: DrawMixTextureShader;
     // 上書きでのテクスチャの描画
     protected readonly drawTextureNoBlendShader: DrawTextureNoBlendShader;
-    // 点描画のshader
-    protected readonly drawPointsShader: DrawPointsShader;
+    // 通常ペン
+    protected readonly normalPen: NormalPen;
     // 描画中の線の色
     protected drawColor: { r: number; g: number; b: number; a: number };
     // 描画中の線の太さ
@@ -76,11 +77,10 @@ export class Canvas
 
         this.drawColor = { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
 
-        this.drawLineShader = new DrawLineShader(this.gl);
         this.drawTextureShader = new DrawTextureShader(this.gl);
         this.drawMixTextureShader = new DrawMixTextureShader(this.gl);
         this.drawTextureNoBlendShader = new DrawTextureNoBlendShader(this.gl);
-        this.drawPointsShader = new DrawPointsShader(this.gl);
+        this.normalPen = new NormalPen(this.gl);
 
         const round2power = function (row: number): number {
             // 数字を2の累乗で丸め込む
@@ -113,6 +113,13 @@ export class Canvas
         );
         this.drawingTexture = tex2;
         this.drawingFrameBuffer = fb2;
+
+        const { texture: tex3, frameBuffer: fb3 } = this.createTextureAndFrameBUffer(
+            this.textureWidth,
+            this.textureHeight,
+        );
+        this.selectAreaTexture = tex3;
+        this.selectAreaFramebuffer = fb3;
 
         // 透明埋め
         this.clearTransparent();
@@ -197,8 +204,18 @@ export class Canvas
                     this.drawingTexture,
                 );
 
+                new ContextScope(
+                    () => {
+                        this.gl.clearColor2D(0.0, 0.0, 0.0, 0.0);
+                    },
+                    gl,
+                    null,
+                    this.selectAreaFramebuffer,
+                    this.selectAreaTexture,
+                );
+
                 if (drawingOnly) {
-                    // drawing textureのみ
+                    // drawing texture(とselect area texture)のみ
                     return;
                 }
 
@@ -222,6 +239,9 @@ export class Canvas
     // 現在の描画中の線の最新を適用する
     protected drawLastDrawing(): void {
         const dLength = this.nowDrawing.drawingList.length;
+        if (dLength < 1) {
+            return; // 1点以上必要
+        }
 
         const rect = this.getBoundingClientRect();
         const width = rect.width;
@@ -232,75 +252,46 @@ export class Canvas
         const attr = new ContextAttribute();
         attr.viewport = { x: 0, y: 0, width: this.textureWidth, height: this.textureHeight };
 
-        if (dLength < 1) {
-            return; // 1点以上必要
-        } else if (dLength === 1) {
-            // 1点
-            const lastPoint = this.nowDrawing.drawingList[dLength - 1];
-            // prettier-ignore
-            const vertexPos = [// 頂点座標配列
-                lastPoint.x * width, lastPoint.y * height,
-            ];
-            // prettier-ignore
-            const vertexColor = [// 頂点色配列
-                color.r, color.g, color.b, color.a,
-            ];
+        // 選択範囲の描画
+        new ContextScope(
+            () => {
+                if (dLength === 1) {
+                    // 1点
+                    const lastPoint = this.nowDrawing.drawingList[dLength - 1];
+                    // prettier-ignore
+                    const vertexPos = [// 頂点座標配列
+                    lastPoint.x * width, lastPoint.y * height,
+                ];
+                    this.normalPen.drawSelectArea(vertexPos, lineWidth / 2, { width: width, height: height });
+                } else {
+                    // 2点以上
+                    // 直前の2点
+                    const lastPoint = this.nowDrawing.drawingList[dLength - 1];
+                    const prePoint = this.nowDrawing.drawingList[dLength - 2];
+                    // prettier-ignore
+                    const vertexPos = [// 頂点座標配列
+                    prePoint.x * width, prePoint.y * height,
+                    lastPoint.x * width, lastPoint.y * height,
+                ];
+                    this.normalPen.drawSelectArea(vertexPos, lineWidth, { width: width, height: height });
+                }
+            },
+            this.gl,
+            attr,
+            this.selectAreaFramebuffer,
+            this.selectAreaTexture,
+        );
 
-            const shader = this.drawPointsShader;
-            const gl = this.gl;
-
-            new ContextScope(
-                () => {
-                    shader.draw({
-                        vertexPos: vertexPos,
-                        vertexColor: vertexColor,
-                        radius: lineWidth / 2,
-                        rect: { width: width, height: height },
-                        edgeDivision: Math.max(Math.ceil(lineWidth / 4) * 2 + 2, 14),
-                    });
-                    gl.flush();
-                },
-                gl,
-                attr,
-                this.drawingFrameBuffer,
-                this.drawingTexture,
-            );
-        } else {
-            // 2点以上
-            // 直前の2点
-            const lastPoint = this.nowDrawing.drawingList[dLength - 1];
-            const prePoint = this.nowDrawing.drawingList[dLength - 2];
-            // prettier-ignore
-            const vertexPos = [// 頂点座標配列
-                prePoint.x * width, prePoint.y * height,
-                lastPoint.x * width, lastPoint.y * height,
-            ];
-            // prettier-ignore
-            const vertexColor = [// 頂点色配列
-                color.r, color.g, color.b, color.a,
-                color.r, color.g, color.b, color.a,
-            ];
-
-            const shader = this.drawLineShader;
-            const gl = this.gl;
-
-            new ContextScope(
-                () => {
-                    shader.draw({
-                        vertexPos: vertexPos,
-                        vertexColor: vertexColor,
-                        lineWidth: lineWidth,
-                        rect: { width: width, height: height },
-                        edgeDivision: Math.max(Math.ceil(lineWidth / 4), 6),
-                    });
-                    gl.flush();
-                },
-                gl,
-                attr,
-                this.drawingFrameBuffer,
-                this.drawingTexture,
-            );
-        }
+        // drawing textureへ描画
+        new ContextScope(
+            () => {
+                this.normalPen.draw([], color, 0, { width: 0, height: 0 }, this.selectAreaTexture);
+            },
+            this.gl,
+            attr,
+            this.drawingFrameBuffer,
+            this.drawingTexture,
+        );
     }
 
     // Canvas textureをUint8Arrayで初期化する
