@@ -1,6 +1,6 @@
 {
   "name": "objectuijs",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "オブジェクト志向でのUI作成のライブラリ",
   "main": "./dist/index.js",
   "files": [
