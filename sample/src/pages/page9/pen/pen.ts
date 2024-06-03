@@ -1,7 +1,7 @@
 /**
  * 描画ペンの基底クラス
  */
-import { Texture } from '../gl/texture';
+import { gl as oujGL } from 'objectuijs';
 
 export abstract class Pen {
     // 描画する
@@ -10,7 +10,7 @@ export abstract class Pen {
         drawColor: { r: number; g: number; b: number; a: number }, // 色
         lineWidth: number, // 太さ。ピクセルで指定
         rect: { width: number; height: number }, // 描画矩形の幅と高さ。ピクセルで指定
-        selectAreaTexture: Texture, // 範囲選択のテクスチャ
+        selectAreaTexture: oujGL.Texture, // 範囲選択のテクスチャ
     ): void;
 
     // 範囲選択を描画する

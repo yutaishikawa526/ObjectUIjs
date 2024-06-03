@@ -1,14 +1,10 @@
 /**
  * テクスチャをアルファブレンドでそのまま描画するshader
  */
-import { Shader } from '../gl/shader';
-import { ContextAttribute } from '../gl/context_attribute';
-import { DrawType, BlendType, TextureMinMagFilter, TextureWrapFilter } from '../gl/type';
-import { Texture } from '../gl/texture';
-import { ContextScope } from '../gl/context_scope';
+import { gl as oujGL } from 'objectuijs';
 
 // テクスチャをそのまま描画
-export class DrawTextureShader extends Shader<Texture> {
+export class DrawTextureShader extends oujGL.Shader<oujGL.Texture> {
     // 頂点shaderプログラムを取得する
     protected getVertexShaderSource(): string {
         // prettier-ignore
@@ -45,7 +41,7 @@ export class DrawTextureShader extends Shader<Texture> {
     }
 
     // 描画処理のコア処理
-    protected drawCore(texture: Texture): void {
+    protected drawCore(texture: oujGL.Texture): void {
         if (this.program === null) {
             throw new Error('programが初期化されていません。');
         }
@@ -70,7 +66,7 @@ export class DrawTextureShader extends Shader<Texture> {
         const posStride = 3;
         const textureStride = 2;
 
-        new ContextScope(
+        new oujGL.ContextScope(
             () => {
                 this.appendVBO('a_position', new Float32Array(vertexPos), posStride);
                 this.appendVBO('a_textureCoord', new Float32Array(textureCoord), textureStride);
@@ -78,15 +74,15 @@ export class DrawTextureShader extends Shader<Texture> {
                 this.bindTexture2DAndAttribute(
                     'u_texture',
                     texture,
-                    TextureMinMagFilter.NEAREST,
-                    TextureMinMagFilter.NEAREST,
-                    TextureWrapFilter.CLAMP_TO_EDGE,
-                    TextureWrapFilter.CLAMP_TO_EDGE,
+                    oujGL.TextureMinMagFilter.NEAREST,
+                    oujGL.TextureMinMagFilter.NEAREST,
+                    oujGL.TextureWrapFilter.CLAMP_TO_EDGE,
+                    oujGL.TextureWrapFilter.CLAMP_TO_EDGE,
                     true,
                 );
 
                 // 描画
-                context.drawArrays(DrawType.TRIANGLE_STRIP, 0, 4);
+                context.drawArrays(oujGL.DrawType.TRIANGLE_STRIP, 0, 4);
 
                 context.unbindTexture2D(texture);
             },
@@ -98,11 +94,11 @@ export class DrawTextureShader extends Shader<Texture> {
     }
 
     // attrスコープの作成
-    protected createAttrScope(): ContextAttribute {
-        const attr = new ContextAttribute();
+    protected createAttrScope(): oujGL.ContextAttribute {
+        const attr = new oujGL.ContextAttribute();
         attr.blend = true;
         attr.culling = false;
-        attr.blendFunc = { src: BlendType.SRC_ALPHA, dest: BlendType.ONE_MINUS_SRC_ALPHA };
+        attr.blendFunc = { src: oujGL.BlendType.SRC_ALPHA, dest: oujGL.BlendType.ONE_MINUS_SRC_ALPHA };
         return attr;
     }
 }

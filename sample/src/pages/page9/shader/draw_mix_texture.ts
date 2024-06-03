@@ -2,14 +2,10 @@
  * 2枚のテクスチャを指定して、1枚目に2枚目をアルファブレンドで描画したものを
  * アルファブレンドでフレームバッファーに描画
  */
-import { Shader } from '../gl/shader';
-import { ContextAttribute } from '../gl/context_attribute';
-import { DrawType, BlendType, TextureMinMagFilter, TextureWrapFilter } from '../gl/type';
-import { Texture } from '../gl/texture';
-import { ContextScope } from '../gl/context_scope';
+import { gl as oujGL } from 'objectuijs';
 
 // テクスチャをそのまま描画
-export class DrawMixTextureShader extends Shader<{ first: Texture; second: Texture }> {
+export class DrawMixTextureShader extends oujGL.Shader<{ first: oujGL.Texture; second: oujGL.Texture }> {
     // 頂点shaderプログラムを取得する
     protected getVertexShaderSource(): string {
         // prettier-ignore
@@ -54,16 +50,16 @@ export class DrawMixTextureShader extends Shader<{ first: Texture; second: Textu
     }
 
     // 描画処理のコア処理
-    protected drawCore(args: { first: Texture; second: Texture }): void {
+    protected drawCore(args: { first: oujGL.Texture; second: oujGL.Texture }): void {
         if (this.program === null) {
             throw new Error('programが初期化されていません。');
         }
         const context = this.context;
 
-        const attr = new ContextAttribute();
+        const attr = new oujGL.ContextAttribute();
         attr.blend = true;
         attr.culling = false;
-        attr.blendFunc = { src: BlendType.SRC_ALPHA, dest: BlendType.ONE_MINUS_SRC_ALPHA };
+        attr.blendFunc = { src: oujGL.BlendType.SRC_ALPHA, dest: oujGL.BlendType.ONE_MINUS_SRC_ALPHA };
 
         // prettier-ignore
         const vertexPos = [// 頂点座標配列
@@ -87,7 +83,7 @@ export class DrawMixTextureShader extends Shader<{ first: Texture; second: Textu
         const firstTexture = args.first;
         const secondTexture = args.second;
 
-        new ContextScope(
+        new oujGL.ContextScope(
             () => {
                 this.appendVBO('a_position', new Float32Array(vertexPos), posStride);
                 this.appendVBO('a_textureCoord', new Float32Array(textureCoord), textureStride);
@@ -95,25 +91,25 @@ export class DrawMixTextureShader extends Shader<{ first: Texture; second: Textu
                 this.bindTexture2DAndAttribute(
                     'u_texture_first',
                     firstTexture,
-                    TextureMinMagFilter.NEAREST,
-                    TextureMinMagFilter.NEAREST,
-                    TextureWrapFilter.CLAMP_TO_EDGE,
-                    TextureWrapFilter.CLAMP_TO_EDGE,
+                    oujGL.TextureMinMagFilter.NEAREST,
+                    oujGL.TextureMinMagFilter.NEAREST,
+                    oujGL.TextureWrapFilter.CLAMP_TO_EDGE,
+                    oujGL.TextureWrapFilter.CLAMP_TO_EDGE,
                     true,
                 );
 
                 this.bindTexture2DAndAttribute(
                     'u_texture_second',
                     secondTexture,
-                    TextureMinMagFilter.NEAREST,
-                    TextureMinMagFilter.NEAREST,
-                    TextureWrapFilter.CLAMP_TO_EDGE,
-                    TextureWrapFilter.CLAMP_TO_EDGE,
+                    oujGL.TextureMinMagFilter.NEAREST,
+                    oujGL.TextureMinMagFilter.NEAREST,
+                    oujGL.TextureWrapFilter.CLAMP_TO_EDGE,
+                    oujGL.TextureWrapFilter.CLAMP_TO_EDGE,
                     true,
                 );
 
                 // 描画
-                context.drawArrays(DrawType.TRIANGLE_STRIP, 0, vertexPos.length / posStride);
+                context.drawArrays(oujGL.DrawType.TRIANGLE_STRIP, 0, vertexPos.length / posStride);
 
                 context.unbindTexture2D(firstTexture);
                 context.unbindTexture2D(secondTexture);

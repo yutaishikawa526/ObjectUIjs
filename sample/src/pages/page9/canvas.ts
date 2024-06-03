@@ -10,11 +10,7 @@ import { DrawChunk, DrawingList } from './chunk';
 import { DrawTextureShader } from './shader/draw_texture';
 import { DrawMixTextureShader } from './shader/draw_mix_texture';
 import { DrawTextureNoBlendShader } from './shader/draw_texture_noblend';
-import { GLContext } from './gl/context';
-import { Texture } from './gl/texture';
-import { Framebuffer } from './gl/framebuffer';
-import { ContextAttribute } from './gl/context_attribute';
-import { ContextScope } from './gl/context_scope';
+import { gl as oujGL } from 'objectuijs';
 import { NormalPen } from './pen/normal_pen';
 
 // キャンバス
@@ -31,23 +27,23 @@ export class Canvas
     // 戻る中のchunkの一覧
     protected readonly backChunkList: Array<DrawChunk> = [];
     // Canvasのframebufferのテキスチャ
-    protected readonly canvasTexture: Texture;
+    protected readonly canvasTexture: oujGL.Texture;
     // Canvasのframebuffer
-    protected readonly canvasFrameBuffer: Framebuffer;
+    protected readonly canvasFrameBuffer: oujGL.Framebuffer;
     // 現在描画中のテキスチャ
-    protected readonly drawingTexture: Texture;
+    protected readonly drawingTexture: oujGL.Texture;
     // 現在描画中のframebuffer
-    protected readonly drawingFrameBuffer: Framebuffer;
+    protected readonly drawingFrameBuffer: oujGL.Framebuffer;
     // 選択範囲のテクスチャ
-    protected readonly selectAreaTexture: Texture;
+    protected readonly selectAreaTexture: oujGL.Texture;
     // 選択範囲のframebuffer
-    protected readonly selectAreaFramebuffer: Framebuffer;
+    protected readonly selectAreaFramebuffer: oujGL.Framebuffer;
     // 高さ
     protected readonly textureHeight: number;
     // 幅
     protected readonly textureWidth: number;
     // glコンテキスト
-    protected readonly gl: GLContext;
+    protected readonly gl: oujGL.GLContext;
     // テクスチャ描画のshader
     protected readonly drawTextureShader: DrawTextureShader;
     // 1枚目のテクスチャに2枚目をアルファブレンドしたものをアルファブレンドする
@@ -73,7 +69,7 @@ export class Canvas
         if (gl === null) {
             throw new Error('webglが利用できません。');
         }
-        this.gl = new GLContext(gl);
+        this.gl = new oujGL.GLContext(gl);
 
         this.drawColor = { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
 
@@ -130,7 +126,7 @@ export class Canvas
     protected createTextureAndFrameBUffer(
         textureWidth: number,
         textureHeight: number,
-    ): { texture: Texture; frameBuffer: Framebuffer } {
+    ): { texture: oujGL.Texture; frameBuffer: oujGL.Framebuffer } {
         const gl = this.gl;
 
         const texture = gl.createTexture();
@@ -163,10 +159,10 @@ export class Canvas
         gl.setDefaultFramebuffer();
 
         const ccv = gl.getCanvasSize();
-        const attr = new ContextAttribute();
+        const attr = new oujGL.ContextAttribute();
         attr.viewport = { x: 0, y: 0, width: ccv.width, height: ccv.height };
 
-        new ContextScope(
+        new oujGL.ContextScope(
             () => {
                 // キャンバスを白で初期化
                 gl.clearColor2D(1.0, 1.0, 1.0, 1.0);
@@ -189,12 +185,12 @@ export class Canvas
     protected clearTransparent(drawingOnly: boolean = false): void {
         const gl = this.gl;
 
-        const attr = new ContextAttribute();
+        const attr = new oujGL.ContextAttribute();
         attr.viewport = { x: 0, y: 0, width: this.textureWidth, height: this.textureHeight };
 
-        new ContextScope(
+        new oujGL.ContextScope(
             () => {
-                new ContextScope(
+                new oujGL.ContextScope(
                     () => {
                         this.gl.clearColor2D(0.0, 0.0, 0.0, 0.0);
                     },
@@ -204,7 +200,7 @@ export class Canvas
                     this.drawingTexture,
                 );
 
-                new ContextScope(
+                new oujGL.ContextScope(
                     () => {
                         this.gl.clearColor2D(0.0, 0.0, 0.0, 0.0);
                     },
@@ -219,7 +215,7 @@ export class Canvas
                     return;
                 }
 
-                new ContextScope(
+                new oujGL.ContextScope(
                     () => {
                         this.gl.clearColor2D(0.0, 0.0, 0.0, 0.0);
                     },
@@ -249,11 +245,11 @@ export class Canvas
         const color = this.drawColor;
         const lineWidth = this.drawLineWidth;
 
-        const attr = new ContextAttribute();
+        const attr = new oujGL.ContextAttribute();
         attr.viewport = { x: 0, y: 0, width: this.textureWidth, height: this.textureHeight };
 
         // 選択範囲の描画
-        new ContextScope(
+        new oujGL.ContextScope(
             () => {
                 if (dLength === 1) {
                     // 1点
@@ -283,7 +279,7 @@ export class Canvas
         );
 
         // drawing textureへ描画
-        new ContextScope(
+        new oujGL.ContextScope(
             () => {
                 this.normalPen.draw([], color, 0, { width: 0, height: 0 }, this.selectAreaTexture);
             },
@@ -304,10 +300,10 @@ export class Canvas
         // 透明で初期化
         this.clearTransparent();
 
-        const attr = new ContextAttribute();
+        const attr = new oujGL.ContextAttribute();
         attr.viewport = { x: 0, y: 0, width: this.textureWidth, height: this.textureHeight };
 
-        new ContextScope(
+        new oujGL.ContextScope(
             () => {
                 // ピクセル配列をテクスチャに変換
                 const texture = gl.createTexture();
@@ -330,10 +326,10 @@ export class Canvas
     protected saveChunk(): void {
         const gl = this.gl;
 
-        const attr = new ContextAttribute();
+        const attr = new oujGL.ContextAttribute();
         attr.viewport = { x: 0, y: 0, width: this.textureWidth, height: this.textureHeight };
 
-        new ContextScope(
+        new oujGL.ContextScope(
             () => {
                 // drawing textureをCanvas textureに描画
                 const shader = this.drawTextureShader;

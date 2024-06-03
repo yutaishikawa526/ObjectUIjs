@@ -2,15 +2,14 @@
  * 通常のペン
  */
 import { Pen } from './pen';
-import { Texture } from '../gl/texture';
-import { GLContext } from '../gl/context';
+import { gl as oujGL } from 'objectuijs';
 import { DrawLineShader } from '../shader/draw_line';
 import { DrawPointsShader } from '../shader/draw_points';
 import { DrawStencilColorShader } from '../shader/draw_stencil_color_shader';
 
 export class NormalPen extends Pen {
     // コンテキスト
-    protected readonly context: GLContext;
+    protected readonly context: oujGL.GLContext;
     // 範囲選択shader(2点以上)
     protected readonly selectAreaShader: DrawLineShader;
     // 範囲選択shader(1点)
@@ -24,7 +23,7 @@ export class NormalPen extends Pen {
         drawColor: { r: number; g: number; b: number; a: number }, // 色
         lineWidth: number, // 太さ。ピクセルで指定
         rect: { width: number; height: number }, // 描画矩形の幅と高さ。ピクセルで指定
-        selectAreaTexture: Texture, // 範囲選択のテクスチャ
+        selectAreaTexture: oujGL.Texture, // 範囲選択のテクスチャ
     ): void {
         this.drawShader.draw({ stencilTexture: selectAreaTexture, color: drawColor });
     }
@@ -65,7 +64,7 @@ export class NormalPen extends Pen {
     }
 
     // コンストラクタ
-    public constructor(context: GLContext) {
+    public constructor(context: oujGL.GLContext) {
         super();
         this.context = context;
         this.selectAreaShader = new DrawLineShader(context);

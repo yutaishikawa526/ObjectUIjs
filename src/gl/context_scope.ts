@@ -1,7 +1,7 @@
 /**
  * glのコンテキストのスコープ
  */
-import { Scope } from '../scope';
+import { Scope } from '../util/scope';
 import { Framebuffer } from './framebuffer';
 import { Texture } from './texture';
 import { GLContext } from './context';

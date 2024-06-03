@@ -1,15 +1,11 @@
 /**
  * 線を描画するshader
  */
-import { ContextAttribute } from '../gl/context_attribute';
-import { ContextScope } from '../gl/context_scope';
-import { Shader } from '../gl/shader';
-import { Texture } from '../gl/texture';
-import { BlendType, DrawType, TextureMinMagFilter, TextureWrapFilter } from '../gl/type';
+import { gl as oujGL } from 'objectuijs';
 
 // 線を描画
-export class DrawStencilColorShader extends Shader<{
-    stencilTexture: Texture; // ステンシルテクスチャ
+export class DrawStencilColorShader extends oujGL.Shader<{
+    stencilTexture: oujGL.Texture; // ステンシルテクスチャ
     color: { r: number; g: number; b: number; a: number }; // 色
 }> {
     // 頂点shaderプログラムを取得する
@@ -49,7 +45,7 @@ export class DrawStencilColorShader extends Shader<{
 
     // 描画処理のコア処理
     protected drawCore(args: {
-        stencilTexture: Texture; // ステンシルテクスチャ
+        stencilTexture: oujGL.Texture; // ステンシルテクスチャ
         color: { r: number; g: number; b: number; a: number }; // 色
     }): void {
         const program = this.program;
@@ -77,15 +73,15 @@ export class DrawStencilColorShader extends Shader<{
         const posStride = 2;
         const textureStride = 2;
 
-        const attr = new ContextAttribute();
+        const attr = new oujGL.ContextAttribute();
         attr.blend = true;
         attr.culling = false;
-        attr.blendFunc = { src: BlendType.ONE, dest: BlendType.ZERO };
+        attr.blendFunc = { src: oujGL.BlendType.ONE, dest: oujGL.BlendType.ZERO };
 
         const texture = args.stencilTexture;
         const color = args.color;
 
-        new ContextScope(
+        new oujGL.ContextScope(
             () => {
                 this.appendVBO('a_position', new Float32Array(vertexPos), posStride);
                 this.appendVBO('a_textureCoord', new Float32Array(textureCoord), textureStride);
@@ -94,15 +90,15 @@ export class DrawStencilColorShader extends Shader<{
                 this.bindTexture2DAndAttribute(
                     'u_texture',
                     texture,
-                    TextureMinMagFilter.NEAREST,
-                    TextureMinMagFilter.NEAREST,
-                    TextureWrapFilter.CLAMP_TO_EDGE,
-                    TextureWrapFilter.CLAMP_TO_EDGE,
+                    oujGL.TextureMinMagFilter.NEAREST,
+                    oujGL.TextureMinMagFilter.NEAREST,
+                    oujGL.TextureWrapFilter.CLAMP_TO_EDGE,
+                    oujGL.TextureWrapFilter.CLAMP_TO_EDGE,
                     true,
                 );
 
                 // 描画
-                context.drawArrays(DrawType.TRIANGLE_STRIP, 0, 4);
+                context.drawArrays(oujGL.DrawType.TRIANGLE_STRIP, 0, 4);
 
                 context.unbindTexture2D(texture);
             },

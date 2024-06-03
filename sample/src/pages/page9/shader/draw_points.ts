@@ -1,13 +1,10 @@
 /**
  * 点を描画するshader
  */
-import { Shader } from '../gl/shader';
-import { ContextAttribute } from '../gl/context_attribute';
-import { DrawType, BlendType } from '../gl/type';
-import { ContextScope } from '../gl/context_scope';
+import { gl as oujGL } from 'objectuijs';
 
 // 点を描画
-export class DrawPointsShader extends Shader<{
+export class DrawPointsShader extends oujGL.Shader<{
     vertexPos: Array<number>; // 頂点配列。2次元で指定。座標系は左上を(0,0)とする。ピクセル指定
     vertexColor: Array<number>; // 色の配列
     radius: number; // 半径。ピクセルで指定
@@ -149,19 +146,19 @@ export class DrawPointsShader extends Shader<{
             -1.0, 1.0, 0.0, 1.0,
         ];
 
-        const attr = new ContextAttribute();
+        const attr = new oujGL.ContextAttribute();
         attr.blend = true;
         attr.culling = false;
-        attr.blendFunc = { src: BlendType.SRC_ALPHA, dest: BlendType.ONE_MINUS_SRC_ALPHA };
+        attr.blendFunc = { src: oujGL.BlendType.SRC_ALPHA, dest: oujGL.BlendType.ONE_MINUS_SRC_ALPHA };
 
-        new ContextScope(
+        new oujGL.ContextScope(
             () => {
                 this.appendVBO('a_position', new Float32Array(modifiedVPos), vertexStride);
                 this.appendVBO('a_color', new Float32Array(modifiedVCol), colorStride);
 
                 this.appendUniform('u_matrix', projMatrix);
 
-                context.drawArrays(DrawType.TRIANGLE_STRIP, 0, modifiedVPos.length / vertexStride);
+                context.drawArrays(oujGL.DrawType.TRIANGLE_STRIP, 0, modifiedVPos.length / vertexStride);
             },
             context,
             attr,
