@@ -69,6 +69,8 @@ export class DrawLineShader extends Shader<{
 
         if (vertexPos.length < 4) {
             throw new Error('2点以上必要です。');
+        } else if (vertexPos.length % 2 !== 0) {
+            throw new Error('偶数点必要です。');
         } else if (vertexPos.length * 2 !== vertexColor.length) {
             throw new Error('色と座標の整合性が取れていません。');
         } else if (lineWidth <= 0) {
@@ -217,17 +219,6 @@ export class DrawLineShader extends Shader<{
 
             index += 2;
         }
-
-        //const startX = modifiedVPos[0];
-        //const startY = modifiedVPos[1];
-        //console.log('----------------------------');
-        //for(let i=0;i<modifiedVPos.length;){
-        //    const x = modifiedVPos[i] - startX;
-        //    const y = modifiedVPos[i + 1] - startY;
-        //    console.log('(' + x + ',' + y + ')');
-        //    i += 2;
-        //}
-        //console.log('----------------------------');
 
         // prettier-ignore
         const projMatrix = [// 座標変換行列
