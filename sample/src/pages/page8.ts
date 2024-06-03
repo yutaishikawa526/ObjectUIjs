@@ -346,10 +346,6 @@ class SelfCompose
             // 非表示
             if (this.selfComposeParent !== null) {
                 this.selfComposeParent.hideChildSelfCompose(this);
-                if (this.selfComposeParent.dialog !== null && this.selfComposeParent.dialog.isOpen()) {
-                    // ダイアログを表示している場合は再表示
-                    this.selfComposeParent.dialog.close(SelfCompose.DIALOG_REOPEN_KEY);
-                }
             }
         } else if (element.getElementId() === this.sequenceButton.getElementId()) {
             // 連番で追加

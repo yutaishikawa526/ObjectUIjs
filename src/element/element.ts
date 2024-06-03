@@ -127,13 +127,17 @@ export class Element {
 
         // 子要素のNodeを再設置
         const pNode = this.element;
-        let child;
-        while ((child = pNode.lastChild)) {
-            pNode.removeChild(child);
-        }
-        this.childElements.forEach((child: Element) => {
-            pNode.appendChild(child.element);
+        this.childElements.forEach((child: Element, index: number) => {
+            const realChild = pNode.childNodes.length <= index ? null : pNode.childNodes[index];
+            if (realChild === child.element) {
+                return;
+            }
+            pNode.insertBefore(child.element, realChild);
         });
+        for (let i = this.childElements.length; i < pNode.childNodes.length; i++) {
+            const rmChild = pNode.childNodes[i];
+            pNode.removeChild(rmChild);
+        }
     }
     // 描画処理
     public render(): void {
